@@ -1,0 +1,2679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#07090d" />
+<title>OMEN · Phase27 VOR Scar-Tissue Live Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<style>
+:root{
+  --bg:#07090d;--panel:#101722;--panel2:#0d121b;--line:rgba(221,231,255,.12);--line2:rgba(221,231,255,.22);
+  --text:#edf3ff;--muted:#93a0b8;--soft:#647089;--gold:#f0c96a;--green:#78dca3;--red:#ff7777;--blue:#8bb8ff;--violet:#c39cff;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif;
+  --serif:ui-serif,"New York",Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}body{background:radial-gradient(circle at 20% -10%,rgba(139,184,255,.16),transparent 35%),radial-gradient(circle at 90% 0%,rgba(240,201,106,.10),transparent 30%),var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.45;padding:calc(env(safe-area-inset-top) + 8px) 0 calc(env(safe-area-inset-bottom) + 28px)}
+.wrap{width:100%;max-width:620px;margin:0 auto;padding:0 12px}.mono{font-family:var(--mono)}
+.top{position:sticky;top:0;z-index:8;background:linear-gradient(180deg,rgba(7,9,13,.98),rgba(7,9,13,.86));backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:8px 0 10px;margin-bottom:10px}
+.brand{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.title{font-family:var(--serif);font-weight:800;font-size:27px;letter-spacing:.18em}.sub{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-top:2px}.clock{text-align:right;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.priceRow{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:8px}.price{font-family:var(--mono);font-size:31px;letter-spacing:.01em}.source{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.08em;text-align:right}.range{font-family:var(--mono);font-size:9px;color:var(--soft);text-align:right;margin-top:2px}.statusLine{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.06em}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line2);border-radius:999px;padding:4px 8px;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.025)}.chip.ok{color:var(--green);border-color:rgba(120,220,163,.35)}.chip.warn{color:var(--gold);border-color:rgba(240,201,106,.42)}.chip.bad{color:var(--red);border-color:rgba(255,119,119,.42)}.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.card{background:linear-gradient(180deg,rgba(16,23,34,.94),rgba(12,17,26,.94));border:1px solid var(--line);border-radius:16px;margin:10px 0;padding:13px;box-shadow:0 18px 50px rgba(0,0,0,.24)}.head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px}.head h2{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--text)}.head span{font-family:var(--mono);font-size:9px;color:var(--muted)}
+.verdict{text-align:center;padding:20px 10px 17px;border-radius:14px;border:1px solid var(--line);background:radial-gradient(circle at 50% 0%,rgba(139,184,255,.14),transparent 58%),rgba(255,255,255,.025)}.word{font-family:var(--serif);font-size:33px;letter-spacing:.14em;font-weight:900;line-height:1.1}.action{margin-top:7px;font-size:15px}.reason{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:9px;letter-spacing:.04em}.word.long{color:var(--green)}.word.short{color:var(--red)}.word.wait{color:var(--muted)}.word.bonus{color:var(--gold)}.word.chronos{color:var(--blue)}
+.chronoLabel{font-family:var(--serif);font-size:24px;letter-spacing:.08em}.chronoLabel.active{color:var(--green)}.chronoLabel.prime{color:var(--gold)}.chronoLabel.dev{color:var(--blue)}.chronoLabel.aging{color:var(--red)}.chronoLabel.expired{color:var(--soft)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:13px;padding:10px}.metric .lab{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}.metric .val{font-family:var(--mono);font-size:19px;margin-top:5px}.metric .small{font-family:var(--mono);font-size:9px;color:var(--soft);margin-top:2px}
+.barBox{margin:9px 0}.barTop{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:5px}.bar{height:11px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);overflow:hidden}.fill{height:100%;width:0%;background:linear-gradient(90deg,rgba(139,184,255,.45),rgba(240,201,106,.9));transition:width .25s ease}.fill.green{background:linear-gradient(90deg,rgba(120,220,163,.35),rgba(120,220,163,.95))}.fill.red{background:linear-gradient(90deg,rgba(255,119,119,.35),rgba(255,119,119,.95))}.fill.violet{background:linear-gradient(90deg,rgba(195,156,255,.35),rgba(195,156,255,.95))}
+.slots{display:grid;grid-template-columns:1fr;gap:8px}.slot{border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.025);padding:10px;display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center}.slotNum{font-family:var(--mono);font-size:16px;color:var(--soft)}.slotMain{font-size:13px}.slotMeta{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px}.slot.empty{opacity:.55}.slot.long{border-color:rgba(120,220,163,.32)}.slot.short{border-color:rgba(255,119,119,.32)}.slot.bonus{border-color:rgba(240,201,106,.45)}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn,select{appearance:none;-webkit-appearance:none;border:1px solid var(--line2);border-radius:12px;background:rgba(255,255,255,.035);color:var(--text);font-family:var(--mono);font-size:11px;letter-spacing:.08em;padding:11px 10px;text-transform:uppercase;width:100%}.btn:active{background:rgba(255,255,255,.09)}select{color:var(--gold)}.btn.warn{color:var(--gold)}.btn.bad{color:var(--red)}.btn.ok{color:var(--green)}
+.log{max-height:230px;overflow:auto;font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.7}.logRow{border-bottom:1px solid rgba(255,255,255,.05);padding:3px 0}.logRow .t{color:var(--soft)}.logRow.command{color:var(--green)}.logRow.bonus{color:var(--gold)}.logRow.warn{color:var(--red)}.logRow.info{color:var(--muted)}
+.note{font-size:12px;color:var(--muted);line-height:1.55}.foot{font-family:var(--mono);font-size:9px;color:var(--soft);text-align:center;line-height:1.75;margin:18px 0 4px;letter-spacing:.04em}.hide{display:none!important}
+@media (max-width:390px){.price{font-size:27px}.word{font-size:29px}.title{font-size:24px}.grid2{grid-template-columns:1fr}.slot{grid-template-columns:38px 1fr}.slotScore{grid-column:2}.controls{grid-template-columns:1fr}}
+
+/* === PHASE27 VOR SCAR-TISSUE PATCH — UI ONLY, NO LIVE-FEED TOUCH === */
+.vorAuthority{
+  border:1px solid rgba(240,201,106,.42);
+  background:linear-gradient(180deg,rgba(240,201,106,.09),rgba(139,184,255,.035));
+}
+.vorScoreBig{font-family:var(--serif);font-size:32px;letter-spacing:.08em;margin-top:3px}
+.vorPrime{color:var(--gold)}.vorStrong{color:var(--green)}.vorPositive{color:var(--blue)}
+.vorNeutral{color:var(--muted)}.vorReduce{color:var(--red)}.vorWarn{color:var(--red)}
+.vorTiny{font-family:var(--mono);font-size:9px;color:var(--soft);letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+.vorStatePill{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:999px;padding:3px 7px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.08em;margin:3px 4px 0 0;color:var(--muted)}
+.vorStatePill.ok{color:var(--green);border-color:rgba(120,220,163,.35)}
+.vorStatePill.warn{color:var(--gold);border-color:rgba(240,201,106,.42)}
+.vorStatePill.bad{color:var(--red);border-color:rgba(255,119,119,.42)}
+.vorRankRow{display:grid;grid-template-columns:38px 1fr auto;gap:8px;align-items:center;border-top:1px solid var(--line);padding:8px 0}
+.vorRankRow:first-child{border-top:0}
+.vorRankMain{font-family:var(--mono);font-size:10px;letter-spacing:.05em}
+.vorRankSub{font-family:var(--mono);font-size:9px;color:var(--soft);margin-top:2px}
+
+
+/* === PHASE32 ORACLE CONVICTION INDEX TAPE — DOM READ ONLY === */
+.oracle32{margin:14px 0;border:1px solid rgba(215,169,58,.38);border-radius:18px;background:linear-gradient(135deg,rgba(215,169,58,.11),rgba(99,167,255,.08));padding:12px;box-shadow:0 12px 28px rgba(0,0,0,.20)}
+.oracle32Head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}.oracle32Title{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--gold);text-transform:uppercase;font-weight:900}
+.oracle32Seal{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.oracle32Pill{font-family:var(--mono);font-size:9px;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--muted)}
+.oracle32Main{display:grid;grid-template-columns:1.2fr .85fr;gap:10px}.oracle32Tape{border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px;background:rgba(0,0,0,.22)}
+.oracle32Word{font-family:var(--mono);font-size:20px;line-height:1.15;font-weight:1000;letter-spacing:.02em}.oracle32Meta{margin-top:6px;font-family:var(--mono);font-size:10px;color:var(--muted)}
+.oracle32Reason{margin-top:8px;font-size:11px;color:var(--soft);line-height:1.45}.oracle32Grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.oracle32Cell{border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:8px;background:rgba(0,0,0,.16)}
+.oracle32Lab{font-family:var(--mono);font-size:8px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted)}.oracle32Val{font-family:var(--mono);font-size:12px;margin-top:3px;font-weight:800}
+.oracle32GradeS{color:#35c46a}.oracle32GradeA{color:#61d68a}.oracle32GradeB{color:#d7c15a}.oracle32GradeC{color:#d7a93a}.oracle32GradeD{color:#e08c5d}.oracle32GradeX{color:#e05d5d}
+.oracle32GuardCell{grid-column:1/-1}.oracle32GuardCell .oracle32Val{font-size:11px;letter-spacing:.02em}
+@media(max-width:760px){.oracle32Main{grid-template-columns:1fr}.oracle32Grid{grid-template-columns:repeat(2,minmax(0,1fr))}.oracle32Word{font-size:17px}}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><div><div class="title">OMEN</div><div class="sub">1000PEPEUSDT · core v1.1 · chronos timing command field</div></div><div class="clock"><div id="mytClock">MYT —</div><div id="dayLabel">DAY —</div></div></div>
+    <div class="priceRow"><div><div class="price" id="livePrice">—</div><div class="sub">1 point = 0.0000001 price</div></div><div><div class="source" id="feedSource">SOURCE —</div><div class="range" id="range24">24H —</div></div></div>
+    <div class="statusLine"><span id="feedStatus">booting…</span><span id="candleStatus">candles —</span></div>
+    <div class="chips"><span class="chip" id="feedChip">FEED —</span><span class="chip" id="modeChip">MODE —</span><span class="chip" id="memoryChip">MEM —</span><span class="chip" id="slotChip">SLOTS 0/6</span><span class="chip" id="realismChip">REALISM —</span><span class="chip" id="clusterChip">CLUSTER58 —</span><span class="chip" id="vorChip">VOR —</span></div>
+  </div>
+
+  
+
+  <!-- OMEN PHASE32 ORACLE CONVICTION INDEX TAPE: START -->
+  <section id="oracle32" class="oracle32" aria-label="ORACLE conviction tape">
+    <div class="oracle32Head">
+      <div><div class="oracle32Title">ORACLE CONVICTION INDEX TAPE</div><div class="small">Live Conviction Index from OMEN + VOR + CHRONOS + warnings · advisory only</div></div>
+      <div class="oracle32Seal"><span class="oracle32Pill">DOM READ ONLY</span><span class="oracle32Pill">OMEN COMMANDS</span><span class="oracle32Pill">VOR RISKS</span><span class="oracle32Pill">CHRONOS TIMES</span></div>
+    </div>
+    <div class="oracle32Main">
+      <div class="oracle32Tape"><div id="oracle32Word" class="oracle32Word oracle32GradeX">ORACLE WAIT · X · BOOTING</div><div id="oracle32Meta" class="oracle32Meta">Horizon — · CI — · Direction —</div><div id="oracle32Reason" class="oracle32Reason">Waiting for live dashboard readings.</div></div>
+      <div class="oracle32Grid">
+        <div class="oracle32Cell"><div class="oracle32Lab">Grade</div><div id="oracle32Grade" class="oracle32Val">—</div></div>
+        <div class="oracle32Cell"><div class="oracle32Lab">CI</div><div id="oracle32Score" class="oracle32Val">—</div></div>
+        <div class="oracle32Cell"><div class="oracle32Lab">Horizon</div><div id="oracle32Horizon" class="oracle32Val">—</div></div>
+        <div class="oracle32Cell"><div class="oracle32Lab">OMEN</div><div id="oracle32Omen" class="oracle32Val">—</div></div>
+        <div class="oracle32Cell"><div class="oracle32Lab">VOR</div><div id="oracle32Vor" class="oracle32Val">—</div></div>
+        <div class="oracle32Cell"><div class="oracle32Lab">CHRONOS</div><div id="oracle32Chronos" class="oracle32Val">—</div></div>
+
+        <div class="oracle32Cell oracle32GuardCell"><div class="oracle32Lab">Horizon Guard</div><div id="oracle32Guard" class="oracle32Val">Age — · Left — · Validity —</div></div>
+
+      </div>
+    </div>
+  </section>
+  <!-- OMEN PHASE32 ORACLE CONVICTION INDEX TAPE: END -->
+
+
+  <!-- OMEN PHASE 29 ADVISORY-ONLY CHRONOS LIVE PATCH: START -->
+  
+  <style id="chronos-omega-phase29-css">
+  #chronos-omega-phase29 {
+    margin: 10px 0 12px;
+    color: var(--text, #f5f0e6);
+    font-family: var(--sans, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  }
+  #chronos-omega-phase29 * { box-sizing: border-box; }
+  #chronos-omega-phase29 details {
+    border: 1px solid rgba(240,201,106,.36);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(16,23,34,.92), rgba(9,12,18,.96));
+    overflow: hidden;
+  }
+  #chronos-omega-phase29 summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 11px 12px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+  #chronos-omega-phase29 summary::-webkit-details-marker { display: none; }
+  #chronos-omega-phase29 details[open] summary { border-bottom: 1px solid rgba(221,231,255,.12); }
+  #chronos-omega-phase29 .co29-title {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    align-items: center;
+    font-family: var(--mono, ui-monospace, Menlo, Consolas, monospace);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-weight: 900;
+    color: var(--gold, #f0c96a);
+  }
+  #chronos-omega-phase29 .co29-pill {
+    display: inline-flex;
+    padding: 4px 7px;
+    border-radius: 999px;
+    border: 1px solid rgba(221,231,255,.18);
+    background: rgba(255,255,255,.03);
+    color: var(--muted, #93a0b8);
+    white-space: nowrap;
+  }
+  #chronos-omega-phase29 .co29-pill.green { color: #aef8c7; border-color: rgba(120,216,155,.45); background: rgba(120,216,155,.08); }
+  #chronos-omega-phase29 .co29-pill.gold { color: var(--gold, #f0c96a); border-color: rgba(240,201,106,.42); background: rgba(240,201,106,.08); }
+  #chronos-omega-phase29 .co29-pill.red { color: #ffc0c0; border-color: rgba(255,119,119,.45); background: rgba(255,119,119,.08); }
+  #chronos-omega-phase29 .co29-sub {
+    margin-top: 6px;
+    color: var(--muted, #93a0b8);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  #chronos-omega-phase29 .co29-caret {
+    color: var(--gold, #f0c96a);
+    font-size: 14px;
+    font-weight: 900;
+  }
+  #chronos-omega-phase29 details[open] .co29-caret { transform: rotate(180deg); }
+  #chronos-omega-phase29 .co29-body { padding: 12px; }
+  #chronos-omega-phase29 .co29-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 10px;
+  }
+  #chronos-omega-phase29 .co29-card {
+    border: 1px solid rgba(221,231,255,.14);
+    border-radius: 14px;
+    background: rgba(9,12,18,.62);
+    padding: 11px;
+    min-height: 104px;
+  }
+  #chronos-omega-phase29 .co29-card h3 {
+    margin: 0 0 8px;
+    font-family: var(--mono, ui-monospace, Menlo, Consolas, monospace);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--gold, #f0c96a);
+  }
+  #chronos-omega-phase29 .co29-big {
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1;
+    margin: 6px 0 10px;
+  }
+  #chronos-omega-phase29 .co29-kv {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    border-top: 1px solid rgba(221,231,255,.10);
+    padding: 6px 0;
+    font-size: 11px;
+  }
+  #chronos-omega-phase29 .co29-kv span:first-child { color: var(--muted, #93a0b8); }
+  #chronos-omega-phase29 .co29-copy {
+    color: rgba(237,243,255,.86);
+    font-size: 11px;
+    line-height: 1.38;
+  }
+  #chronos-omega-phase29 .co29-ok { border-color: rgba(120,216,155,.42); }
+  #chronos-omega-phase29 .co29-warn { border-color: rgba(240,201,106,.38); }
+  #chronos-omega-phase29 .co29-danger { border-color: rgba(255,119,119,.48); }
+  #chronos-omega-phase29 .co29-foot {
+    margin-top: 10px;
+    border-top: 1px dashed rgba(221,231,255,.14);
+    padding-top: 9px;
+    color: var(--muted, #93a0b8);
+    font-size: 10.5px;
+    line-height: 1.35;
+  }
+  @media(max-width:560px) {
+    #chronos-omega-phase29 { margin: 8px 0 10px; }
+    #chronos-omega-phase29 summary { grid-template-columns: 1fr auto; padding: 10px 11px; }
+    #chronos-omega-phase29 .co29-grid { grid-template-columns: 1fr; }
+    #chronos-omega-phase29 .co29-big { font-size: 22px; }
+    #chronos-omega-phase29 .co29-title { font-size: 9.5px; }
+  }
+  </style>
+  
+  <section id="chronos-omega-phase29" aria-label="CHRONOS-OMEGA advisory timing module">
+    <details>
+      <summary>
+        <div>
+          <div class="co29-title">
+            <span>CHRONOS-OMEGA</span>
+            <span class="co29-pill green">PRIME 88.61%</span>
+            <span class="co29-pill gold">ADVISORY ONLY</span>
+            <span class="co29-pill red">RAW PASSED</span>
+          </div>
+          <div class="co29-sub">Collapsed advisory timing context. RAW PASSED. OMEN commands. VOR risks. CHRONOS does not execute.</div>
+        </div>
+        <div class="co29-caret">⌄</div>
+      </summary>
+      <div class="co29-body">
+        <div class="co29-grid">
+          <div class="co29-card co29-ok">
+            <h3>OMEGA PRIME</h3>
+            <div class="co29-big">88.61%</div>
+            <div class="co29-kv"><span>Weakest fold</span><span>80.00%</span></div>
+            <div class="co29-kv"><span>Events</span><span>76</span></div>
+            <div class="co29-kv"><span>Fold pass</span><span>4/4</span></div>
+            <div class="co29-copy">Survivor timing lane. Timing confidence only.</div>
+          </div>
+          <div class="co29-card co29-warn">
+            <h3>WORKING DIAGNOSTIC</h3>
+            <div class="co29-big">80.58%</div>
+            <div class="co29-kv"><span>Diagnostic events</span><span>242</span></div>
+            <div class="co29-kv"><span>Permission</span><span>Watch only</span></div>
+            <div class="co29-copy">Developing / weak / poison / candidate. Never command.</div>
+          </div>
+          <div class="co29-card co29-danger">
+            <h3>POISON FILTER</h3>
+            <div class="co29-big">STAND DOWN</div>
+            <div class="co29-copy">poison_residual_overconfidence=False AND poison_low_vor=False</div>
+          </div>
+          <div class="co29-card co29-warn">
+            <h3>RAW REPLAY</h3>
+            <div class="co29-big">PASSED</div>
+            <div class="co29-kv"><span>Status</span><span>RAW_PASSED_CANDIDATE_FREEZE_READY</span></div>
+            <div class="co29-kv"><span>Pass / mandatory / missing</span><span>SCOUT 7/7 · PRIME 6/7 · 0</span></div>
+            <div class="co29-copy">RAW PASSED advisory label. Not command-grade.</div>
+          </div>
+        </div>
+        <div class="co29-foot">Phase30.4R RAW PASSED advisory label: no source route changes, no candle memory changes, no OMEN/VOR override. Timing context only, not command-grade.</div>
+      </div>
+    </details>
+  </section>
+  <!-- OMEN PHASE 29 ADVISORY-ONLY CHRONOS LIVE PATCH: END -->
+  
+
+
+  <section class="card">
+    <div class="head"><h2>Live Mission Realism</h2><span>live projection · no hindsight</span></div>
+    <div class="grid2">
+      <div class="metric"><div class="lab">Gate</div><div class="val" id="realismGateVal">—</div><div class="small" id="realismGateSmall">Waiting for live candles</div></div>
+      <div class="metric"><div class="lab">Projected Day Range</div><div class="val" id="projectedRangeVal">—</div><div class="small" id="observedRangeSmall">Observed range —</div></div>
+      <div class="metric"><div class="lab">Checkpoint</div><div class="val" id="checkpointVal">—</div><div class="small" id="checkpointSmall">H+2 / H+4 / H+8 / H+12</div></div>
+      <div class="metric"><div class="lab">Pace / Recovery</div><div class="val" id="paceVal">—</div><div class="small" id="recoverySmall">—</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="verdict"><div class="word wait" id="commandWord">WAKING</div><div class="action" id="commandAction">Bootstrapping candles and opening the live feed.</div><div class="reason" id="commandReason">No command until Omen has enough 1m memory.</div></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>Chronos Lead-Time</h2><span>timing window · signal age · expiry</span></div>
+    <div class="grid2">
+      <div class="metric"><div class="lab">Timing Label</div><div class="val chronoLabel" id="chronosLabel">WAIT</div><div class="small" id="chronosPersonality">No command yet</div></div>
+      <div class="metric"><div class="lab">Signal Age</div><div class="val" id="chronosAge">—</div><div class="small" id="chronosExpiry">—</div></div>
+      <div class="metric"><div class="lab">Best Window</div><div class="val" id="chronosWindow">—</div><div class="small" id="chronosStateNote">—</div></div>
+      <div class="metric"><div class="lab">Historical Timing</div><div class="val" id="chronosMedian">—</div><div class="small" id="chronosHitRate">—</div></div>
+    </div>
+  </section>
+
+
+  <!-- === PHASE27 VOR SCAR-TISSUE PATCH — SCORING LAYER ONLY === -->
+  <section class="card vorAuthority">
+    <div class="head"><h2>Authority Lock</h2><span>OMEN commands · VOR scores</span></div>
+    <div class="verdict">
+      <div class="word chronos" id="vorAuthorityWord">OMEN COMMANDS · VOR SCORES</div>
+      <div class="action" id="vorAuthorityAction">VERMITHOR-OMEGA is a scar-tissue scoring layer only.</div>
+      <div class="reason" id="vorAuthorityReason">VOR ranks confidence, warnings, companion confirmation and quality. It does not override OMEN.</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>VERMITHOR-OMEGA / VOR Score</h2><span>scar-tissue confidence · no command override</span></div>
+    <div class="grid2">
+      <div class="metric"><div class="lab">VOR State</div><div class="val vorScoreBig" id="vorStateVal">—</div><div class="small" id="vorStateSmall">Waiting for OMEN feature field</div></div>
+      <div class="metric"><div class="lab">VOR Score</div><div class="val" id="vorScoreVal">—</div><div class="small" id="vorScoreSmall">Profile COMPANION · 39m companion window</div></div>
+      <div class="metric"><div class="lab">Mission Rescue</div><div class="val" id="vorRescueVal">—</div><div class="small" id="vorRescueSmall">Prevents VOR starvation</div></div>
+      <div class="metric"><div class="lab">Companion</div><div class="val" id="vorCompanionVal">—</div><div class="small" id="vorCompanionSmall">Lonely / confirmed / opposed</div></div>
+    </div>
+    <div class="vorTiny" id="vorDoctrineLine">Doctrine: OMEN commands. VOR scores. Rescue prevents starvation.</div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>VOR Scar-Tissue Cells</h2><span>participation · memory · persistence · conflict · chop</span></div>
+    <div class="grid2">
+      <div class="metric"><div class="lab">Participation</div><div class="val" id="vorEPCIVal">—</div><div class="small" id="vorEPCISmall">EPCI</div></div>
+      <div class="metric"><div class="lab">Memory Tension</div><div class="val" id="vorFMTFVal">—</div><div class="small" id="vorFMTFSmall">FMTF</div></div>
+      <div class="metric"><div class="lab">Persistence</div><div class="val" id="vorFPESVal">—</div><div class="small" id="vorFPESSmall">FPES</div></div>
+      <div class="metric"><div class="lab">Conflict Court</div><div class="val" id="vorPDCFVal">—</div><div class="small" id="vorPDCFSmall">PDCF</div></div>
+      <div class="metric"><div class="lab">Chop / Fake Rhythm</div><div class="val" id="vorCFRVal">—</div><div class="small" id="vorCFRSmall">CFR</div></div>
+      <div class="metric"><div class="lab">Operator Bias</div><div class="val" id="vorOperatorBias">—</div><div class="small" id="vorOperatorSmall">Advisory only</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>VOR-Ranked OMEN Event Stack</h2><span>attention ranking · not trade instruction</span></div>
+    <div id="vorRankStack"></div>
+  </section>
+
+
+  <section class="card">
+    <div class="head"><h2>Cluster-Aware Mission Meter</h2><span>Cluster58 · anti-overlap truth layer</span></div>
+    <div class="barBox"><div class="barTop"><span>Cluster-capped Omen credit</span><span id="projectedMeterTxt">0 / 1500p</span></div><div class="bar"><div class="fill green" id="projectedMeter"></div></div></div>
+    <div class="barBox"><div class="barTop"><span>Raw projected credit · diagnostic only</span><span id="rawMeterTxt">0p raw</span></div><div class="bar"><div class="fill" id="rawMeter"></div></div></div>
+    <div class="barBox"><div class="barTop"><span>Operator confirmed</span><span id="confirmedMeterTxt">0 / 1500p</span></div><div class="bar"><div class="fill violet" id="confirmedMeter"></div></div></div>
+    <div class="controls" style="margin-top:10px"><button class="btn ok" id="add350">+350p</button><button class="btn ok" id="add500">+500p</button><button class="btn ok" id="add900">+900p</button><button class="btn warn" id="resetConfirmed">RESET CONFIRMED</button></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>Command Slots</h2><span id="slotSub">Warpath-5 · max 6</span></div>
+    <div class="slots" id="slotList"></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>State Engine</h2><span id="stateSub">Pre → Formation → Actual → Residual</span></div>
+    <div class="grid2"><div class="metric"><div class="lab">State</div><div class="val" id="stateVal">—</div><div class="small" id="stateSmall">—</div></div><div class="metric"><div class="lab">Direction</div><div class="val" id="directionVal">—</div><div class="small" id="directionSmall">—</div></div></div>
+    <div id="scoreBars"></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>Warning Court</h2><span>field · realism · overlap · exhaustion</span></div>
+    <div class="grid2"><div class="metric"><div class="lab">Field</div><div class="val" id="fieldWarn">—</div><div class="small">Opportunity field</div></div><div class="metric"><div class="lab">Adverse Path</div><div class="val" id="adverseWarn">—</div><div class="small">Opposite movement risk</div></div><div class="metric"><div class="lab">Exhaustion</div><div class="val" id="exhaustWarn">—</div><div class="small">Residual / stretched tape</div></div><div class="metric"><div class="lab">Realism Gate</div><div class="val" id="realismWarn">—</div><div class="small">Mission permission</div></div><div class="metric"><div class="lab">Overlap Rule</div><div class="val" id="overlapWarn">—</div><div class="small">58m cluster cap</div></div><div class="metric"><div class="lab">Candidate</div><div class="val" id="candidateVal">—</div><div class="small" id="candidateSmall">—</div></div></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>Controls</h2><span>local storage enabled</span></div>
+    <div class="controls"><select id="modeSelect"></select><button class="btn" id="syncBtn">SYNC FEED</button><button class="btn" id="exportBtn">EXPORT SESSION</button><button class="btn bad" id="clearBtn">CLEAR TODAY</button></div>
+  </section>
+
+  <section class="card">
+    <div class="head"><h2>Live Log</h2><span id="logCount">0 events</span></div>
+    <div class="log" id="log"></div>
+  </section>
+
+  <section class="card"><p class="note">Omen runs on live candles, local memory, and reconnect/catch-up logic. iOS Chrome/Safari can suspend JavaScript when the app is backgrounded, so the dashboard saves state, reconnects, detects gaps, restores candles, and recomputes when you return. This dashboard reports points and signal states only; it does not compute money, P&L, fees, or stop-loss money values.</p></section>
+
+  <div class="foot">OMEN LIVE DASHBOARD · PHASE 20 · CORE V1.1 CHRONOS TIMING LAYER · 1000PEPEUSDT<br/>BINGX WS PRIMARY · BINANCE WS/REST FALLBACK · BINANCE 1M CANDLE BOOTSTRAP</div>
+</div>
+
+<script>
+/*
+  OMEN LIVE FEED CORE v1
+  Clean extraction from uploaded live-feed source only.
+  Keeps transport, candle bootstrap, REST fallback, reconnect, wake recovery,
+  optional trade microstream, and Omen-owned localStorage memory.
+  Excludes prior dashboard UI, old engine constants, gauges, verdict logic, and non-Omen models.
+*/
+(function (global) {
+  'use strict';
+
+  const DEFAULTS = {
+    binanceSymbol: '1000PEPEUSDT',
+    binanceWsSymbol: '1000pepeusdt',
+    bingxSymbol: '1000PEPE-USDT',
+    interval: '1m',
+    bootstrapLimit: 1500,
+    closedPullLimit: 10,
+    maxCandles: 5000,
+    maxPriceTicks: 3000,
+    storageKey: 'omen_live_feed_v1_1000PEPEUSDT',
+    storageMaxAgeHours: 96,
+    restPulseMs: 12000,
+    watchdogMs: 4000,
+    closedPullMs: 5000,
+    memorySaveMs: 15000,
+    staleSoftMs: 15000,
+    staleHardMs: 30000,
+    heartbeatMs: 6000,
+    reconnectGuardMs: 5000,
+    bingxMaxTries: 4,
+    binanceMaxTries: 8,
+    startTradeStream: true,
+    callbacks: {}
+  };
+
+  function createOmenLiveFeed(options = {}) {
+    const cfg = Object.assign({}, DEFAULTS, options);
+    cfg.callbacks = Object.assign({}, DEFAULTS.callbacks, options.callbacks || {});
+
+    const state = {
+      started: false,
+      lastLive: 0,
+      lastMessageAt: 0,
+      lastClosedPull: 0,
+      lastError: 'NONE',
+      lastRoute: 'BOOT',
+      liveSource: '—',
+      bingxTries: 0,
+      binanceTries: 0,
+      rescueCount: 0,
+      lastRescue: 0,
+      wsBingX: null,
+      wsBinance: null,
+      wsTrade: null,
+      timers: {},
+      priceStream: [],
+      candleMap: new Map(),
+      candles: [],
+      latest24h: { high: null, low: null, change: null, changePct: null },
+      tradeBuckets: new Map(),
+      tradeLastAt: 0,
+      memoryOk: false,
+      restored: false
+    };
+
+    function emit(name, payload) {
+      const fn = cfg.callbacks[name];
+      if (typeof fn === 'function') {
+        try { fn(payload, api); } catch (err) { console.warn('[OmenFeed callback]', name, err); }
+      }
+    }
+
+    function setStatus(text, extra = {}) {
+      emit('status', Object.assign({ text, at: Date.now() }, extra));
+    }
+
+    function setSource(source) {
+      state.liveSource = source;
+      emit('source', { source, at: Date.now() });
+    }
+
+    function markRoute(route) {
+      state.lastRoute = route;
+      state.lastMessageAt = Date.now();
+    }
+
+    function streamError(message) {
+      state.lastError = String(message || 'NONE').slice(0, 160);
+      emit('error', { message: state.lastError, at: Date.now(), route: state.lastRoute });
+    }
+
+    function minuteKey(t) {
+      return Math.floor(Number(t) / 60000) * 60000;
+    }
+
+    function socketState(ws) {
+      return !ws ? 'NONE' : ws.readyState === 0 ? 'CONNECTING' : ws.readyState === 1 ? 'OPEN' : ws.readyState === 2 ? 'CLOSING' : 'CLOSED';
+    }
+
+    function formatPrice(p) {
+      return Number(p).toFixed(7);
+    }
+
+    async function gunzip(payload) {
+      if (typeof payload === 'string') return payload;
+      try {
+        if (global.DecompressionStream) {
+          const stream = new Blob([payload]).stream().pipeThrough(new DecompressionStream('gzip'));
+          return new TextDecoder().decode(await new Response(stream).arrayBuffer());
+        }
+      } catch (_) {}
+      try {
+        if (global.pako) return global.pako.inflate(new Uint8Array(payload), { to: 'string' });
+      } catch (_) {}
+      try {
+        if (global.pako) return global.pako.ungzip(new Uint8Array(payload), { to: 'string' });
+      } catch (_) {}
+      return null;
+    }
+
+    function storageAvailable() {
+      try {
+        const k = '_omen_feed_storage_test';
+        global.localStorage.setItem(k, '1');
+        global.localStorage.removeItem(k);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function serializeCandle(c) {
+      return [c.t, c.o, c.h, c.l, c.c, c.v || 0, c.n || 0, c.tb || 0, c.source || ''];
+    }
+
+    function deserializeCandle(row) {
+      return {
+        t: +row[0], o: +row[1], h: +row[2], l: +row[3], c: +row[4],
+        v: +row[5] || 0, n: +row[6] || 0, tb: +row[7] || 0, source: row[8] || 'memory'
+      };
+    }
+
+    function pruneCandles() {
+      state.candles.sort((a, b) => a.t - b.t);
+      while (state.candles.length > cfg.maxCandles) {
+        const old = state.candles.shift();
+        state.candleMap.delete(old.t);
+      }
+    }
+
+    function upsertCandle(candle, reason = 'upsert') {
+      if (!candle || !(candle.c > 0) || !Number.isFinite(candle.t)) return false;
+      const t = minuteKey(candle.t);
+      const incoming = Object.assign({}, candle, { t });
+      const prevLast = state.candles.length ? state.candles[state.candles.length - 1] : null;
+      const existing = state.candleMap.get(t);
+      if (existing) {
+        Object.assign(existing, incoming);
+      } else {
+        if (prevLast && t - prevLast.t > 60000) {
+          emit('gap', { from: prevLast.t, to: t, missingMinutes: Math.floor((t - prevLast.t) / 60000) - 1, reason });
+        }
+        state.candleMap.set(t, incoming);
+        state.candles.push(incoming);
+        pruneCandles();
+      }
+      emit('candle', { candle: incoming, reason, candles: state.candles.length });
+      return true;
+    }
+
+    function updateCurrentCandle(price, t = Date.now()) {
+      const k = minuteKey(t);
+      let c = state.candleMap.get(k);
+      if (!c) {
+        c = { t: k, o: price, h: price, l: price, c: price, v: 0, n: 0, tb: 0, source: 'live' };
+        state.candleMap.set(k, c);
+        state.candles.push(c);
+        pruneCandles();
+      } else {
+        c.h = Math.max(c.h, price);
+        c.l = Math.min(c.l, price);
+        c.c = price;
+        c.source = 'live';
+      }
+      return c;
+    }
+
+    function candleFromKline(kline, source = 'bootstrap') {
+      return {
+        t: minuteKey(+kline[0]),
+        o: +kline[1],
+        h: +kline[2],
+        l: +kline[3],
+        c: +kline[4],
+        v: +kline[5] || 0,
+        n: +kline[8] || 0,
+        tb: +kline[9] || 0,
+        source
+      };
+    }
+
+    function rebuildFromKlines(data, reason = 'bootstrap') {
+      state.candleMap.clear();
+      state.candles = [];
+      state.priceStream = [];
+      const cutoff = minuteKey(Date.now());
+      for (const k of data || []) {
+        const c = candleFromKline(k, reason);
+        if (!(c.c > 0)) continue;
+        state.candleMap.set(c.t, c);
+        state.candles.push(c);
+        state.priceStream.push({ t: c.t + 59000, px: c.c });
+      }
+      state.candles.sort((a, b) => a.t - b.t);
+      state.priceStream = state.priceStream.slice(-cfg.maxPriceTicks);
+      pruneCandles();
+      emit('bootstrap', { candles: state.candles.length, cutoff, reason });
+    }
+
+    function pushPrice(price, meta = {}) {
+      const px = Number(price);
+      if (!(px > 0)) return;
+      state.lastLive = Date.now();
+      state.priceStream.push({ t: state.lastLive, px });
+      if (state.priceStream.length > cfg.maxPriceTicks) state.priceStream.shift();
+      updateCurrentCandle(px, state.lastLive);
+
+      if (meta.high24h !== undefined) state.latest24h.high = Number(meta.high24h);
+      if (meta.low24h !== undefined) state.latest24h.low = Number(meta.low24h);
+      if (meta.change !== undefined) state.latest24h.change = Number(meta.change);
+      if (meta.changePct !== undefined) state.latest24h.changePct = Number(meta.changePct);
+
+      emit('price', {
+        price: px,
+        priceText: formatPrice(px),
+        source: state.liveSource,
+        high24h: state.latest24h.high,
+        low24h: state.latest24h.low,
+        change: state.latest24h.change,
+        changePct: state.latest24h.changePct,
+        at: state.lastLive
+      });
+    }
+
+    function closeSockets() {
+      if (state.timers.heartbeat) clearInterval(state.timers.heartbeat);
+      for (const key of ['wsBingX', 'wsBinance', 'wsTrade']) {
+        const ws = state[key];
+        try {
+          if (ws) {
+            ws.onopen = null; ws.onmessage = null; ws.onclose = null; ws.onerror = null;
+            ws.close();
+          }
+        } catch (_) {}
+        state[key] = null;
+      }
+    }
+
+    function startHeartbeat(ws, label) {
+      if (state.timers.heartbeat) clearInterval(state.timers.heartbeat);
+      state.timers.heartbeat = setInterval(() => {
+        const age = Date.now() - (state.lastLive || state.lastMessageAt || 0);
+        if (ws && ws.readyState === 1 && label === 'BingX') {
+          try { ws.send('Ping'); } catch (err) { streamError('heartbeat ping failed: ' + err.message); }
+        }
+        if (age > 18000) {
+          streamError(label + ' silent ' + Math.round(age / 1000) + 's');
+          rescue('heartbeat silent');
+        }
+      }, cfg.heartbeatMs);
+    }
+
+    async function restPulse() {
+      try {
+        markRoute('BINANCE_REST_PULSE');
+        const url = `https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=${encodeURIComponent(cfg.binanceSymbol)}`;
+        const r = await fetch(url, { cache: 'no-store' });
+        const m = await r.json();
+        const c = m.lastPrice || m.close || m.price;
+        if (c) {
+          setSource('Binance REST pulse');
+          setStatus('live · Binance REST pulse');
+          pushPrice(c, { high24h: m.highPrice, low24h: m.lowPrice, change: m.priceChange, changePct: m.priceChangePercent });
+          streamError('NONE');
+          return true;
+        }
+        streamError('REST pulse returned no price');
+      } catch (err) {
+        streamError('REST pulse failed: ' + err.message);
+      }
+      return false;
+    }
+
+    function startRestPulse() {
+      if (state.timers.restPulse) clearInterval(state.timers.restPulse);
+      state.timers.restPulse = setInterval(() => {
+        const age = Date.now() - (state.lastLive || 0);
+        if (!state.lastLive || age > cfg.restPulseMs || socketState(state.wsBingX) !== 'OPEN') restPulse();
+      }, cfg.restPulseMs);
+    }
+
+    function rescue(reason) {
+      const now = Date.now();
+      if (now - (state.lastRescue || 0) < cfg.reconnectGuardMs) return;
+      state.lastRescue = now;
+      state.rescueCount += 1;
+      setStatus('guardian rescue · ' + reason, { rescueCount: state.rescueCount });
+      restPulse();
+      state.bingxTries = 0;
+      state.binanceTries = 0;
+      closeSockets();
+      setTimeout(() => connectBingX(), 600);
+      if (cfg.startTradeStream) setTimeout(() => connectTradeStream(), 1200);
+    }
+
+    function startWatchdog() {
+      if (state.timers.watchdog) clearInterval(state.timers.watchdog);
+      state.timers.watchdog = setInterval(() => {
+        const age = Date.now() - (state.lastLive || 0);
+        if (!state.lastLive) return;
+        if (age > cfg.staleSoftMs) {
+          setStatus('stale feed ' + Math.round(age / 1000) + 's · pulse checking');
+          restPulse();
+        }
+        if (age > cfg.staleHardMs) rescue('stale ' + Math.round(age / 1000) + 's');
+      }, cfg.watchdogMs);
+    }
+
+    function connectBinance() {
+      if (state.binanceTries >= cfg.binanceMaxTries) {
+        setStatus('price unavailable · both feeds blocked');
+        return;
+      }
+      state.binanceTries += 1;
+      let ws;
+      try {
+        ws = new WebSocket(`wss://fstream.binance.com/ws/${cfg.binanceWsSymbol}@ticker`);
+        state.wsBinance = ws;
+      } catch (_) {
+        setStatus('Binance fallback blocked');
+        return;
+      }
+      setSource('Binance fallback');
+      setStatus('connecting Binance fallback…');
+      markRoute('BINANCE_WS_CONNECTING');
+      const timeout = setTimeout(() => { try { ws.close(); } catch (_) {} }, 9000);
+      ws.onmessage = ev => {
+        let m;
+        try { m = JSON.parse(ev.data); } catch (_) { return; }
+        if (m && m.c) {
+          clearTimeout(timeout);
+          markRoute('BINANCE_WS');
+          setStatus('live · Binance fallback');
+          setSource('Binance');
+          streamError('NONE');
+          pushPrice(m.c, { high24h: m.h, low24h: m.l, change: m.p, changePct: m.P });
+        }
+      };
+      ws.onclose = () => {
+        clearTimeout(timeout);
+        if (Date.now() - state.lastLive > 10000) setTimeout(connectBinance, 1800);
+      };
+      ws.onerror = () => { streamError('Binance WS error'); try { ws.close(); } catch (_) {} };
+    }
+
+    function connectBingX() {
+      if (state.bingxTries >= cfg.bingxMaxTries) {
+        connectBinance();
+        return;
+      }
+      state.bingxTries += 1;
+      let ws;
+      try {
+        ws = new WebSocket('wss://open-api-swap.bingx.com/swap-market');
+        state.wsBingX = ws;
+        ws.binaryType = 'arraybuffer';
+      } catch (_) {
+        connectBinance();
+        return;
+      }
+      setSource('BingX');
+      setStatus('connecting BingX…');
+      markRoute('BINGX_WS_CONNECTING');
+      const timeout = setTimeout(() => { try { ws.close(); } catch (_) {} }, 9000);
+      ws.onopen = () => {
+        markRoute('BINGX_WS_OPEN');
+        startHeartbeat(ws, 'BingX');
+        try {
+          ws.send(JSON.stringify({ id: 'omen-' + Date.now(), reqType: 'sub', dataType: cfg.bingxSymbol + '@ticker' }));
+        } catch (err) {
+          streamError('BingX subscribe failed: ' + err.message);
+        }
+      };
+      ws.onmessage = async ev => {
+        const txt = await gunzip(ev.data);
+        if (txt === null) return;
+        if (txt === 'Ping') { try { ws.send('Pong'); } catch (_) {} return; }
+        let m;
+        try { m = JSON.parse(txt); } catch (_) { return; }
+        if (m && m.ping) { try { ws.send(JSON.stringify({ pong: m.ping })); } catch (_) {} return; }
+        if (m && m.data) {
+          const d = Array.isArray(m.data) ? m.data[0] : m.data;
+          const c = d.c || d.lastPrice || d.close || d.p;
+          const h = d.h || d.highPrice;
+          const l = d.l || d.lowPrice;
+          if (c) {
+            clearTimeout(timeout);
+            markRoute('BINGX_WS');
+            setStatus('live · BingX');
+            setSource('BingX');
+            streamError('NONE');
+            pushPrice(c, { high24h: h, low24h: l });
+          }
+        }
+      };
+      ws.onclose = () => {
+        clearTimeout(timeout);
+        if (Date.now() - state.lastLive > 10000) setTimeout(connectBingX, 1600);
+      };
+      ws.onerror = () => { streamError('BingX WS error'); try { ws.close(); } catch (_) {} };
+    }
+
+    async function bootstrapHistory() {
+      try {
+        setStatus('loading Binance 1m bootstrap…');
+        const url = `https://fapi.binance.com/fapi/v1/klines?symbol=${encodeURIComponent(cfg.binanceSymbol)}&interval=${encodeURIComponent(cfg.interval)}&limit=${cfg.bootstrapLimit}`;
+        const r = await fetch(url, { cache: 'no-store' });
+        const data = await r.json();
+        if (Array.isArray(data)) {
+          rebuildFromKlines(data, 'bootstrap');
+          const last = state.candles[state.candles.length - 1];
+          if (last) pushPrice(last.c, {});
+          setStatus('bootstrap loaded · opening live feed');
+          return true;
+        }
+      } catch (err) {
+        streamError('bootstrap failed: ' + err.message);
+        setStatus('bootstrap failed · opening live feed');
+      }
+      return false;
+    }
+
+    async function pullClosedCandles() {
+      const want = minuteKey(Date.now()) - 60000;
+      const last = state.candles.length ? state.candles[state.candles.length - 1] : null;
+      if (last && last.t >= want && Date.now() - state.lastClosedPull < cfg.closedPullMs) return;
+      state.lastClosedPull = Date.now();
+      try {
+        const url = `https://fapi.binance.com/fapi/v1/klines?symbol=${encodeURIComponent(cfg.binanceSymbol)}&interval=${encodeURIComponent(cfg.interval)}&limit=${cfg.closedPullLimit}`;
+        const r = await fetch(url, { cache: 'no-store' });
+        const data = await r.json();
+        if (!Array.isArray(data)) throw new Error('closed pull returned non-array');
+        const cutoff = minuteKey(Date.now());
+        let added = 0;
+        for (const k of data) {
+          const c = candleFromKline(k, 'closed-rest');
+          if (c.t < cutoff && c.c > 0) {
+            const existed = state.candleMap.has(c.t);
+            upsertCandle(c, 'closed-rest');
+            calibrateTradeBucket(c);
+            if (!existed) added += 1;
+          }
+        }
+        if (added) saveMemory('closed-pull');
+        emit('closedSync', { added, candles: state.candles.length, at: Date.now() });
+      } catch (err) {
+        streamError('closed candle pull failed: ' + err.message);
+      }
+    }
+
+    function tradeBucket(k) {
+      let b = state.tradeBuckets.get(k);
+      if (!b) {
+        b = { t: k, v: 0, n: 0, tb: 0, ratioV: 1, ratioN: 1 };
+        state.tradeBuckets.set(k, b);
+        for (const kk of state.tradeBuckets.keys()) {
+          if (k - kk > 30 * 60000) state.tradeBuckets.delete(kk);
+        }
+      }
+      return b;
+    }
+
+    function connectTradeStream() {
+      if (!cfg.startTradeStream) return;
+      let ws;
+      try {
+        ws = new WebSocket('wss://open-api-swap.bingx.com/swap-market');
+        state.wsTrade = ws;
+        ws.binaryType = 'arraybuffer';
+      } catch (_) { return; }
+      ws.onopen = () => {
+        try { ws.send(JSON.stringify({ id: 'omen-trade-' + Date.now(), reqType: 'sub', dataType: cfg.bingxSymbol + '@trade' })); } catch (_) {}
+      };
+      ws.onmessage = async ev => {
+        const txt = typeof ev.data === 'string' ? ev.data : await gunzip(ev.data);
+        if (txt === null) return;
+        if (txt === 'Ping' || (txt.includes && txt.includes('Ping'))) { try { ws.send(txt.replace('Ping', 'Pong')); } catch (_) {} return; }
+        let m;
+        try { m = JSON.parse(txt); } catch (_) { return; }
+        if (m && m.ping) { try { ws.send(JSON.stringify({ pong: m.ping })); } catch (_) {} return; }
+        if (m && m.data && m.data.length > 0) {
+          const now = Date.now();
+          state.tradeLastAt = now;
+          for (const tr of m.data) {
+            const q = parseFloat(tr.q);
+            if (!(q > 0)) continue;
+            const tt = +tr.T || +tr.t || now;
+            const b = tradeBucket(minuteKey(tt));
+            b.v += q;
+            b.n += 1;
+            if (!tr.m) b.tb += q;
+          }
+          emit('tradeBucket', { bucket: state.tradeBuckets.get(minuteKey(now)), at: now });
+        }
+      };
+      ws.onclose = () => { if (state.started) setTimeout(connectTradeStream, 3000); };
+      ws.onerror = () => { try { ws.close(); } catch (_) {} };
+    }
+
+    function calibrateTradeBucket(bar) {
+      const b = state.tradeBuckets.get(bar.t);
+      if (!b || b.n < 30 || !(bar.v > 0) || !(bar.n > 0)) return;
+      b.ratioV = bar.v / b.v;
+      b.ratioN = bar.n / b.n;
+      emit('tradeCalibrated', { bucket: b, candle: bar, at: Date.now() });
+    }
+
+    function saveMemory(reason = 'manual') {
+      if (!state.memoryOk) return false;
+      try {
+        const payload = {
+          version: 1,
+          reason,
+          savedAt: Date.now(),
+          symbol: cfg.binanceSymbol,
+          candles: state.candles.slice(-cfg.maxCandles).map(serializeCandle),
+          latest24h: state.latest24h,
+          lastLive: state.lastLive,
+          lastRoute: state.lastRoute,
+          lastError: state.lastError
+        };
+        global.localStorage.setItem(cfg.storageKey, JSON.stringify(payload));
+        emit('memory', { action: 'save', reason, candles: payload.candles.length, at: payload.savedAt });
+        return true;
+      } catch (err) {
+        streamError('memory save failed: ' + err.message);
+        return false;
+      }
+    }
+
+    function restoreMemory() {
+      state.memoryOk = storageAvailable();
+      if (!state.memoryOk) {
+        emit('memory', { action: 'unavailable', at: Date.now() });
+        return false;
+      }
+      try {
+        const raw = global.localStorage.getItem(cfg.storageKey);
+        if (!raw) return false;
+        const payload = JSON.parse(raw);
+        const ageH = (Date.now() - (payload.savedAt || 0)) / 3600000;
+        if (ageH > cfg.storageMaxAgeHours || payload.symbol !== cfg.binanceSymbol) return false;
+        state.candleMap.clear();
+        state.candles = [];
+        for (const row of payload.candles || []) {
+          const c = deserializeCandle(row);
+          state.candleMap.set(c.t, c);
+          state.candles.push(c);
+        }
+        state.candles.sort((a, b) => a.t - b.t);
+        pruneCandles();
+        Object.assign(state.latest24h, payload.latest24h || {});
+        state.restored = true;
+        emit('memory', { action: 'restore', candles: state.candles.length, ageHours: ageH, at: Date.now() });
+        return true;
+      } catch (err) {
+        streamError('memory restore failed: ' + err.message);
+        return false;
+      }
+    }
+
+    function clearMemory() {
+      if (!state.memoryOk) return false;
+      try {
+        global.localStorage.removeItem(cfg.storageKey);
+        emit('memory', { action: 'clear', at: Date.now() });
+        return true;
+      } catch (_) { return false; }
+    }
+
+    function exportMemory() {
+      return {
+        version: 1,
+        exportedAt: Date.now(),
+        symbol: cfg.binanceSymbol,
+        status: getStatus(),
+        candles: state.candles.map(c => Object.assign({}, c)),
+        priceStream: state.priceStream.slice(-cfg.maxPriceTicks),
+        latest24h: Object.assign({}, state.latest24h)
+      };
+    }
+
+    function wake(reason = 'wake') {
+      const age = Date.now() - (state.lastLive || 0);
+      setStatus('resyncing on ' + reason + '…');
+      if (age > 8000 || socketState(state.wsBingX) !== 'OPEN') {
+        restPulse();
+        state.bingxTries = 0;
+        state.binanceTries = 0;
+        closeSockets();
+        setTimeout(() => connectBingX(), 300);
+        if (cfg.startTradeStream) setTimeout(() => connectTradeStream(), 900);
+      }
+      pullClosedCandles();
+      saveMemory('wake-' + reason);
+    }
+
+    function bindWakeHandlers() {
+      if (!global.document || state._wakeBound) return;
+      state._wakeBound = true;
+      global.document.addEventListener('visibilitychange', () => {
+        if (global.document.hidden) saveMemory('hidden');
+        else wake('return');
+      });
+      global.addEventListener('focus', () => wake('focus'));
+      global.addEventListener('pageshow', e => { if (e.persisted) wake('restore'); });
+      global.addEventListener('online', () => wake('network'));
+      global.addEventListener('offline', () => setStatus('offline · waiting for network'));
+      global.addEventListener('pagehide', () => saveMemory('pagehide'));
+    }
+
+    function start() {
+      if (state.started) return api;
+      state.started = true;
+      restoreMemory();
+      bindWakeHandlers();
+      setStatus('syncing…');
+      bootstrapHistory().finally(() => {
+        connectBingX();
+        if (cfg.startTradeStream) connectTradeStream();
+        startRestPulse();
+        startWatchdog();
+        state.timers.closedPull = setInterval(pullClosedCandles, cfg.closedPullMs);
+        state.timers.memory = setInterval(() => saveMemory('timer'), cfg.memorySaveMs);
+      });
+      return api;
+    }
+
+    function stop() {
+      state.started = false;
+      for (const key of Object.keys(state.timers)) {
+        try { clearInterval(state.timers[key]); clearTimeout(state.timers[key]); } catch (_) {}
+      }
+      state.timers = {};
+      closeSockets();
+      saveMemory('stop');
+      setStatus('stopped');
+      return api;
+    }
+
+    function sync() {
+      state.bingxTries = 0;
+      state.binanceTries = 0;
+      state.lastLive = 0;
+      closeSockets();
+      setStatus('syncing…');
+      bootstrapHistory().finally(() => {
+        connectBingX();
+        if (cfg.startTradeStream) connectTradeStream();
+        startRestPulse();
+        startWatchdog();
+        pullClosedCandles();
+      });
+      return api;
+    }
+
+    function getStatus() {
+      return {
+        started: state.started,
+        source: state.liveSource,
+        route: state.lastRoute,
+        socketBingX: socketState(state.wsBingX),
+        socketBinance: socketState(state.wsBinance),
+        socketTrade: socketState(state.wsTrade),
+        lastLive: state.lastLive,
+        lastLiveAgeMs: state.lastLive ? Date.now() - state.lastLive : null,
+        candles: state.candles.length,
+        priceTicks: state.priceStream.length,
+        lastError: state.lastError,
+        rescueCount: state.rescueCount,
+        memoryOk: state.memoryOk,
+        restored: state.restored,
+        latest24h: Object.assign({}, state.latest24h)
+      };
+    }
+
+    const api = {
+      start,
+      stop,
+      sync,
+      wake,
+      restPulse,
+      pullClosedCandles,
+      saveMemory,
+      restoreMemory,
+      clearMemory,
+      exportMemory,
+      getStatus,
+      getCandles: () => state.candles.slice(),
+      getPriceStream: () => state.priceStream.slice(),
+      getTradeBuckets: () => Array.from(state.tradeBuckets.values()),
+      minuteKey,
+      formatPrice,
+      _state: state
+    };
+
+    return api;
+  }
+
+  global.createOmenLiveFeed = createOmenLiveFeed;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* OMEN DASHBOARD ENGINE CORE v1.1 PHASE17
+   Phase16-frozen Omen state machine for 1000PEPEUSDT. Uses OmenLiveFeed callbacks.
+   No money/P&L/fee calculations. Points only, where 1 point = 0.0000001 price.
+*/
+(function(global){
+  'use strict';
+
+  const TICK = 1e-7;
+  const STORAGE_KEY = 'omen_dashboard_v2_core10_1000PEPEUSDT';
+  const STATE_ORDER = ['PRE-FORMATION','FORMATION','ACTUAL-STATE','RESIDUAL-WATCH'];
+  const MODE_REGISTRY = {
+    WARPATH5: { id:'WARPATH5', name:'Warpath-5', minCommandScore:0.50, cooldownMinutes:79, maxCommandsPerMYTDay:6, slot6RequiresBonusGate:true, label:'Default · about 5/day' },
+    MAXHARVEST: { id:'MAXHARVEST', name:'Max Harvest', minCommandScore:0.50, cooldownMinutes:58, maxCommandsPerMYTDay:6, slot6RequiresBonusGate:true, label:'Denser · higher mission coverage' },
+    QUALITY6: { id:'QUALITY6', name:'Quality 6', minCommandScore:0.54, cooldownMinutes:58, maxCommandsPerMYTDay:6, slot6RequiresBonusGate:true, label:'Cleaner quality · fewer commands' },
+    AGGRESSIVE4: { id:'AGGRESSIVE4', name:'Aggressive 4', minCommandScore:0.54, cooldownMinutes:58, maxCommandsPerMYTDay:4, slot6RequiresBonusGate:false, label:'Four-command discipline' },
+    BALANCED3: { id:'BALANCED3', name:'Balanced 3', minCommandScore:0.54, cooldownMinutes:58, maxCommandsPerMYTDay:3, slot6RequiresBonusGate:false, label:'Moderate daily attempt' },
+    SNIPER: { id:'SNIPER', name:'Sniper', minCommandScore:0.54, cooldownMinutes:180, maxCommandsPerMYTDay:2, slot6RequiresBonusGate:false, label:'Strictest command layer' }
+  };
+  const DEFAULT_MODE_ID = 'WARPATH5';
+
+
+  const PHASE16 = {
+    engineName:'OMEN_CORE_V1_0_LOGIC_FREEZE',
+    missionTargetPoints:1500,
+    antiOverlapClusterMinutes:58,
+    pointDefinition:'1 point = 0.0000001 price',
+    validation:{ allOOSDayRatePct:91.15, h12AllowedSuccessPct:97.60, h12PrecisionGE900Pct:98.20, h12RecallGE900Pct:97.32 },
+    checkpoints:[2,3,4,6,8,12],
+    projectionRatios:{
+      2:3.672841513152624,
+      3:3.12710311536226,
+      4:2.7956606903342323,
+      6:2.294398674618292,
+      8:2.000536005968751,
+      12:1.5621768008298083
+    },
+    gateBands:[
+      { id:'OBSERVE_ONLY_LT350', label:'Observe Only', min:0, max:350, permission:'NO_MISSION' },
+      { id:'MICRO_SCOUT_350_499', label:'Micro Scout', min:350, max:500, permission:'NO_1500_PROMISE' },
+      { id:'LOW_RANGE_SHIELD_500_899', label:'Low-Range Shield', min:500, max:900, permission:'RECOVERY_ONLY' },
+      { id:'CONDITIONAL_WARPATH_900_1499', label:'Conditional Warpath', min:900, max:1500, permission:'WARPATH_CONDITIONAL' },
+      { id:'FULL_WARPATH_1500_PLUS', label:'Full Warpath', min:1500, max:Infinity, permission:'FULL_WARPATH' }
+    ]
+  };
+
+
+  const PHASE20_CHRONOS = {
+    moduleName:'OMEN_CHRONOS_LEAD_TIME_LAYER_V1',
+    source:'Phase18 Cluster58 lead-time court + Phase19 expiry rules',
+    rulePrinciple:'Timing guidance only. Chronos does not create trades by itself.',
+    targetWindowMeaning:'350/500p are fast reaction targets; 900/1500p are larger development targets.',
+    rules:{
+        "PRE-FORMATION": {
+            "personality": "EARLY_WATCH",
+            "immediateEndMin": 5,
+            "primeEndMin": 50,
+            "developingEndMin": 95,
+            "agingEndMin": 175,
+            "expiredAfterMin": 175,
+            "median500Min": 18.0,
+            "median900Min": 32.0,
+            "median1500Min": 60.0,
+            "hit500Pct": 81.77,
+            "hit900Pct": 68.09,
+            "hit1500Pct": 49.0,
+            "operatorNote": "Ingredients are forming. Watch for confirmation; do not force before movement confirms."
+        },
+        "FORMATION": {
+            "personality": "DEVELOPING",
+            "immediateEndMin": 20,
+            "primeEndMin": 110,
+            "developingEndMin": 150,
+            "agingEndMin": 215,
+            "expiredAfterMin": 215,
+            "median500Min": 51.0,
+            "median900Min": 88.5,
+            "median1500Min": 110.5,
+            "hit500Pct": 52.02,
+            "hit900Pct": 34.2,
+            "hit1500Pct": 18.03,
+            "operatorNote": "Structure is building. Give it time, but monitor confirmation."
+        },
+        "ACTUAL-STATE": {
+            "personality": "ACTIVE_NOW",
+            "immediateEndMin": 15,
+            "primeEndMin": 30,
+            "developingEndMin": 60,
+            "agingEndMin": 180,
+            "expiredAfterMin": 180,
+            "median500Min": 8.0,
+            "median900Min": 18.0,
+            "median1500Min": 40.0,
+            "hit500Pct": 81.14,
+            "hit900Pct": 70.55,
+            "hit1500Pct": 59.32,
+            "operatorNote": "Move is already alive or very close. Do not delay too much."
+        },
+        "RESIDUAL-WATCH": {
+            "personality": "AFTERSHOCK",
+            "immediateEndMin": 10,
+            "primeEndMin": 55,
+            "developingEndMin": 95,
+            "agingEndMin": 190,
+            "expiredAfterMin": 190,
+            "median500Min": 26.0,
+            "median900Min": 55.0,
+            "median1500Min": 82.5,
+            "hit500Pct": 91.89,
+            "hit900Pct": 81.08,
+            "hit1500Pct": 54.05,
+            "operatorNote": "Post-move aftershock. Useful, but manage late/exhaustion risk."
+        },
+        "CHOP-HARVEST": {
+            "personality": "CHOP_HARVEST",
+            "immediateEndMin": 10,
+            "primeEndMin": 80,
+            "developingEndMin": 130,
+            "agingEndMin": 195,
+            "expiredAfterMin": 195,
+            "median500Min": 30.5,
+            "median900Min": 53.0,
+            "median1500Min": 72.5,
+            "hit500Pct": 46.11,
+            "hit900Pct": 35.92,
+            "hit1500Pct": 22.52,
+            "operatorNote": "Smaller brick logic. Expect smaller repeated movement, not clean expansion."
+        },
+        "CRAWL-CONTINUATION": {
+            "personality": "ACTIVE_CRAWL",
+            "immediateEndMin": 5,
+            "primeEndMin": 40,
+            "developingEndMin": 70,
+            "agingEndMin": 120,
+            "expiredAfterMin": 120,
+            "median500Min": 8.0,
+            "median900Min": 19.0,
+            "median1500Min": 59.0,
+            "hit500Pct": 81.4,
+            "hit900Pct": 69.77,
+            "hit1500Pct": 58.14,
+            "operatorNote": "Slow continuation can move quickly once confirmed, but avoid chasing exhaustion."
+        },
+        "LOW-RANGE-UPPER-FADE": {
+            "personality": "CHOP_HARVEST",
+            "immediateEndMin": 45,
+            "primeEndMin": 125,
+            "developingEndMin": 185,
+            "agingEndMin": 205,
+            "expiredAfterMin": 205,
+            "median500Min": 77.0,
+            "median900Min": 136.0,
+            "median1500Min": 178.0,
+            "hit500Pct": 20.93,
+            "hit900Pct": 11.63,
+            "hit1500Pct": 6.98,
+            "operatorNote": "Smaller brick logic. Expect smaller repeated movement, not clean expansion."
+        },
+        "LOW-RANGE-LOWER-FADE": {
+            "personality": "CHOP_HARVEST",
+            "immediateEndMin": 35,
+            "primeEndMin": 90,
+            "developingEndMin": 100,
+            "agingEndMin": 160,
+            "expiredAfterMin": 160,
+            "median500Min": 53.0,
+            "median900Min": 54.0,
+            "median1500Min": 120.0,
+            "hit500Pct": 21.62,
+            "hit900Pct": 13.51,
+            "hit1500Pct": 10.81,
+            "operatorNote": "Smaller brick logic. Expect smaller repeated movement, not clean expansion."
+        },
+        "REVERSAL-RECOVERY": {
+            "personality": "TACTICAL",
+            "immediateEndMin": 10,
+            "primeEndMin": 50,
+            "developingEndMin": 90,
+            "agingEndMin": 175,
+            "expiredAfterMin": 175,
+            "median500Min": 25.5,
+            "median900Min": 53.5,
+            "median1500Min": 75.0,
+            "hit500Pct": 88.89,
+            "hit900Pct": 75.56,
+            "hit1500Pct": 51.11,
+            "operatorNote": "Use confirmation and warnings; this state has smaller sample support."
+        },
+        "LOW-RANGE-CENTER-SNAPBACK": {
+            "personality": "CHOP_HARVEST",
+            "immediateEndMin": 15,
+            "primeEndMin": 90,
+            "developingEndMin": 130,
+            "agingEndMin": 195,
+            "expiredAfterMin": 195,
+            "median500Min": 31.5,
+            "median900Min": 54.0,
+            "median1500Min": 78.0,
+            "hit500Pct": 41.85,
+            "hit900Pct": 31.94,
+            "hit1500Pct": 20.26,
+            "operatorNote": "Smaller brick logic. Expect smaller repeated movement, not clean expansion."
+        }
+    }
+  };
+
+  function createOmenDashboardEngine(options){
+    const cfg = Object.assign({ callbacks:{}, modeId:DEFAULT_MODE_ID }, options||{});
+    const cb = Object.assign({}, cfg.callbacks||{});
+    const state = {
+      mode: MODE_REGISTRY[cfg.modeId] || MODE_REGISTRY[DEFAULT_MODE_ID],
+      latestPrice:null,
+      latestPriceAt:0,
+      source:'—',
+      feedText:'booting…',
+      feedStatus:'BOOT',
+      candles:[],
+      tradeBuckets:[],
+      lastCandleT:0,
+      lastFeature:null,
+      lastCandidate:null,
+      lastCommandTs:0,
+      day: mytDate(Date.now()),
+      commandsToday:[],
+      clusterRecords:[],
+      projectedCleanPoints:0,
+      rawProjectedPoints:0,
+      clusterCappedPoints:0,
+      confirmedPoints:0,
+      realismGate:{ label:'Warming', id:'EARLY', projectedRangePoints:0, checkpointH:0, elapsedHours:0, permission:'WAIT' },
+      paceState:'WAIT',
+      recoveryState:'NORMAL',
+      logs:[],
+      memoryOk:false,
+      warnings:{ field:'WAIT', adverse:'OK', exhaustion:'OK', feed:'BOOT' },
+      signalTiming:{ label:'WAIT', personality:'WAIT', ageMinutes:0, windowText:'—', expiryText:'—', note:'Waiting for a command' }
+    };
+
+    function emit(name, payload){
+      if(typeof cb[name] === 'function'){
+        try{ cb[name](payload, api); }catch(err){ console.warn('[OmenDash callback]', name, err); }
+      }
+    }
+
+    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+    function sigmoid(x){ return 1/(1+Math.exp(-x)); }
+    function fmt(n,d){ return Number.isFinite(+n) ? (+n).toFixed(d==null?2:d) : '—'; }
+    function points(a,b){ return Math.abs((+b)-(+a))/TICK; }
+    function signedPts(a,b){ return ((+b)-(+a))/TICK; }
+    function mytDate(t){
+      const d = new Date((t||Date.now()) + (new Date().getTimezoneOffset()+480)*60000);
+      return d.toISOString().slice(0,10);
+    }
+    function mytHM(t){
+      const d = new Date((t||Date.now()) + (new Date().getTimezoneOffset()+480)*60000);
+      return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+    function dayGuard(t){
+      const d = mytDate(t||Date.now());
+      if(state.day !== d){
+        archiveDay();
+        state.day = d;
+        state.commandsToday = [];
+        state.clusterRecords = [];
+        state.projectedCleanPoints = 0;
+        state.rawProjectedPoints = 0;
+        state.clusterCappedPoints = 0;
+        state.confirmedPoints = 0;
+        state.realismGate = { label:'Warming', id:'EARLY', projectedRangePoints:0, checkpointH:0, elapsedHours:0, permission:'WAIT' };
+        state.paceState = 'WAIT';
+        state.recoveryState = 'NORMAL';
+        state.lastCommandTs = 0;
+        log('DAY RESET · ' + d, 'info');
+        saveState('day-reset');
+      }
+    }
+    function archiveDay(){
+      // Intentionally light. The current live dashboard keeps visible current-day state;
+      // detailed evidence is available through export JSON.
+    }
+    function storageAvailable(){
+      try{ localStorage.setItem('_omen_dash_t','1'); localStorage.removeItem('_omen_dash_t'); return true; }catch(_){ return false; }
+    }
+    function saveState(reason){
+      if(!state.memoryOk) return false;
+      try{
+        const payload = {
+          version:1, savedAt:Date.now(), reason, day:state.day, modeId:state.mode.id,
+          commandsToday:state.commandsToday, clusterRecords:state.clusterRecords, projectedCleanPoints:state.projectedCleanPoints,
+          rawProjectedPoints:state.rawProjectedPoints, clusterCappedPoints:state.clusterCappedPoints,
+          confirmedPoints:state.confirmedPoints, realismGate:state.realismGate, paceState:state.paceState, recoveryState:state.recoveryState, logs:state.logs.slice(-120), lastCommandTs:state.lastCommandTs
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        emit('memory', { action:'save', reason, at:Date.now() });
+        return true;
+      }catch(err){ log('MEMORY SAVE FAILED · '+err.message, 'warn'); return false; }
+    }
+    function restoreState(){
+      state.memoryOk = storageAvailable();
+      if(!state.memoryOk){ emit('memory', {action:'unavailable'}); return false; }
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return false;
+        const p = JSON.parse(raw);
+        if(!p || p.version !== 1) return false;
+        state.mode = MODE_REGISTRY[p.modeId] || state.mode;
+        const today = mytDate(Date.now());
+        if(p.day === today){
+          state.day = p.day;
+          state.commandsToday = Array.isArray(p.commandsToday) ? p.commandsToday : [];
+          state.clusterRecords = Array.isArray(p.clusterRecords) ? p.clusterRecords : [];
+          state.projectedCleanPoints = +p.projectedCleanPoints || 0;
+          state.rawProjectedPoints = +p.rawProjectedPoints || 0;
+          state.clusterCappedPoints = +p.clusterCappedPoints || 0;
+          state.confirmedPoints = +p.confirmedPoints || 0;
+          if(p.realismGate) state.realismGate = p.realismGate;
+          state.paceState = p.paceState || state.paceState;
+          state.recoveryState = p.recoveryState || state.recoveryState;
+          state.lastCommandTs = +p.lastCommandTs || 0;
+        }
+        state.logs = Array.isArray(p.logs) ? p.logs.slice(-120) : [];
+        emit('memory', { action:'restore', at:Date.now(), day:p.day });
+        return true;
+      }catch(err){ log('MEMORY RESTORE FAILED · '+err.message, 'warn'); return false; }
+    }
+    function clearState(){
+      try{ if(state.memoryOk) localStorage.removeItem(STORAGE_KEY); }catch(_){}
+      state.commandsToday = [];
+      state.clusterRecords = [];
+      state.projectedCleanPoints = 0;
+      state.rawProjectedPoints = 0;
+      state.clusterCappedPoints = 0;
+      state.confirmedPoints = 0;
+      state.realismGate = { label:'Warming', id:'EARLY', projectedRangePoints:0, checkpointH:0, elapsedHours:0, permission:'WAIT' };
+      state.paceState = 'WAIT';
+      state.recoveryState = 'NORMAL';
+      state.lastCommandTs = 0;
+      state.logs = [];
+      log('SESSION CLEARED', 'info');
+      emit('state', snapshot());
+      saveState('clear');
+    }
+    function log(text, type){
+      const row = { t:Date.now(), hm:mytHM(Date.now()), text:String(text), type:type||'info' };
+      state.logs.unshift(row);
+      if(state.logs.length>160) state.logs.pop();
+      emit('log', row);
+      emit('state', snapshot());
+    }
+
+
+    function minutesSinceMYTMidnight(t){
+      const d = new Date((t||Date.now()) + (new Date().getTimezoneOffset()+480)*60000);
+      return d.getHours()*60 + d.getMinutes();
+    }
+    function dayCandles(candles, day){
+      const d = day || state.day;
+      return candles.filter(c => mytDate(c.t) === d);
+    }
+    function checkpointForMinutes(mins){
+      const h = Math.floor((mins||0)/60);
+      let cp = 0;
+      for(const x of PHASE16.checkpoints){ if(h >= x) cp = x; }
+      return cp;
+    }
+    function gateBand(projected){
+      if(!Number.isFinite(projected)) return { id:'UNKNOWN', label:'Unknown', permission:'WAIT', min:0, max:0 };
+      for(const b of PHASE16.gateBands){ if(projected >= b.min && projected < b.max) return b; }
+      return PHASE16.gateBands[0];
+    }
+    function liveRealismGate(candles, t){
+      const mins = minutesSinceMYTMidnight(t||Date.now());
+      const cp = checkpointForMinutes(mins);
+      const dc = dayCandles(candles, state.day);
+      const observed = rangePts(dc);
+      const closePath = pathPts(dc);
+      let max1m = 0, candlePath = 0;
+      for(const c of dc){ const r = (c.h-c.l)/TICK; max1m = Math.max(max1m, r); candlePath += r; }
+      const activity = 0.72*observed + 0.025*closePath + 0.005*candlePath + 0.20*max1m;
+      const ratio = PHASE16.projectionRatios[cp || 2] || PHASE16.projectionRatios[12];
+      let projected = Math.max(observed, 0.78*(observed*ratio) + 0.12*activity + 0.10*observed);
+      if(cp === 0 && mins < 120){ projected = Math.max(observed, projected*0.72); }
+      const band = gateBand(projected);
+      return {
+        id: cp===0 ? 'EARLY_'+band.id : band.id,
+        label: cp===0 ? 'Early ' + band.label : band.label,
+        permission: cp===0 ? 'EARLY_WAIT' : band.permission,
+        projectedRangePoints:+projected.toFixed(2),
+        observedRangePoints:+observed.toFixed(2),
+        closePathPoints:+closePath.toFixed(2),
+        checkpointH:cp,
+        elapsedHours:+(mins/60).toFixed(2),
+        nextCheckpointH: PHASE16.checkpoints.find(x=>x>cp) || null,
+        canAttempt1500: projected >= 900 && cp >= 2,
+        canFullWarpath: projected >= 1500 && cp >= 2
+      };
+    }
+    function recomputeClusterRecords(commands){
+      const sorted = (commands||[]).slice().sort((a,b)=>a.t-b.t);
+      const clusters=[];
+      const gap = PHASE16.antiOverlapClusterMinutes*60000;
+      for(const cmd of sorted){
+        let cluster = clusters[clusters.length-1];
+        if(!cluster || cmd.t - cluster.endT >= gap){
+          cluster = { clusterId:'C'+(clusters.length+1), startT:cmd.t, endT:cmd.t, commands:[], winner:null, credit:0 };
+          clusters.push(cluster);
+        }
+        cluster.commands.push(cmd);
+        cluster.endT = Math.max(cluster.endT, cmd.t);
+        const credit = +cmd.projectedPoints || 0;
+        if(!cluster.winner || credit > cluster.credit || (credit === cluster.credit && (+cmd.score||0) > (+cluster.winner.score||0))){
+          cluster.winner = cmd;
+          cluster.credit = credit;
+        }
+      }
+      return clusters.map((c,i)=>({
+        clusterId:'C'+(i+1), startT:c.startT, endT:c.endT, hm:mytHM(c.startT),
+        commandSlots:c.commands.map(x=>x.slot), winnerSlot:c.winner?c.winner.slot:null,
+        credit:+Math.min(1500, c.credit).toFixed(2), size:c.commands.length
+      }));
+    }
+    function refreshMissionAccounting(){
+      state.rawProjectedPoints = state.commandsToday.reduce((s,c)=>s+(+c.projectedPoints||0),0);
+      state.clusterRecords = recomputeClusterRecords(state.commandsToday);
+      state.clusterCappedPoints = state.clusterRecords.reduce((s,c)=>s+(+c.credit||0),0);
+      state.projectedCleanPoints = state.clusterCappedPoints;
+      const mins = minutesSinceMYTMidnight(Date.now());
+      const expected = PHASE16.missionTargetPoints * Math.max(0, Math.min(1, mins/1440));
+      if(mins < 120) state.paceState = 'EARLY';
+      else if(state.clusterCappedPoints >= Math.max(350, expected*1.12)) state.paceState = 'AHEAD';
+      else if(state.clusterCappedPoints >= expected*0.78) state.paceState = 'ON PACE';
+      else state.paceState = 'BEHIND';
+      const g = state.realismGate || {};
+      if(g.permission === 'RECOVERY_ONLY') state.recoveryState = 'LOW-RANGE SHIELD';
+      else if(state.paceState === 'BEHIND' && (g.canAttempt1500 || g.permission === 'WARPATH_CONDITIONAL')) state.recoveryState = 'PACE SHIELD';
+      else if(g.permission === 'NO_MISSION' || g.permission === 'NO_1500_PROMISE') state.recoveryState = 'MISSION REDUCED';
+      else state.recoveryState = 'NORMAL';
+    }
+    function sliceLast(arr, n){ return arr.slice(Math.max(0, arr.length-n)); }
+    function closeAt(arr, idxFromEnd){ return arr[arr.length-1-idxFromEnd] && arr[arr.length-1-idxFromEnd].c; }
+    function rangePts(arr){
+      if(!arr.length) return 0;
+      let hi=-Infinity, lo=Infinity;
+      for(const c of arr){ if(c.h>hi)hi=c.h; if(c.l<lo)lo=c.l; }
+      return (hi-lo)/TICK;
+    }
+    function positionInRange(arr){
+      if(!arr.length) return 0.5;
+      let hi=-Infinity, lo=Infinity;
+      for(const c of arr){ if(c.h>hi)hi=c.h; if(c.l<lo)lo=c.l; }
+      const last = arr[arr.length-1].c;
+      const den = hi-lo;
+      if(!(den>0)) return 0.5;
+      return clamp((last-lo)/den,0,1);
+    }
+    function pathPts(arr){
+      let s=0;
+      for(let i=1;i<arr.length;i++) s += Math.abs(arr[i].c-arr[i-1].c)/TICK;
+      return s;
+    }
+    function stdevReturns(arr){
+      if(arr.length<3) return 0;
+      const r=[];
+      for(let i=1;i<arr.length;i++) r.push((arr[i].c-arr[i-1].c)/TICK);
+      const m = r.reduce((a,b)=>a+b,0)/r.length;
+      let ss=0; for(const x of r){ const d=x-m; ss+=d*d; }
+      return Math.sqrt(ss/Math.max(1,r.length-1));
+    }
+    function sumVol(arr){ return arr.reduce((s,c)=>s+(+c.v||0),0); }
+    function takerBias(arr){
+      let v=0,tb=0;
+      for(const c of arr){ v += +c.v||0; tb += +c.tb||0; }
+      if(!(v>0)) return 0;
+      return clamp(((tb/v)-0.5)*2, -1, 1);
+    }
+    function retPts(candles, n){
+      if(candles.length <= n) return 0;
+      const last = candles[candles.length-1].c;
+      const prior = candles[candles.length-1-n].c;
+      return (last-prior)/TICK;
+    }
+
+    function computeFeatureSnapshot(candles){
+      const n = candles.length;
+      if(n < 260){
+        return { ready:false, reason:'Need at least 260 candles for 245m Omen field. Current: '+n, edge:0, state:'DORMANT' };
+      }
+      const w7=sliceLast(candles,7), w13=sliceLast(candles,13), w39=sliceLast(candles,39), w58=sliceLast(candles,58), w79=sliceLast(candles,79), w245=sliceLast(candles,245);
+      const last = candles[n-1];
+      const r7=retPts(candles,7), r13=retPts(candles,13), r39=retPts(candles,39), r58=retPts(candles,58), r79=retPts(candles,79), r245=retPts(candles,245);
+      const range13=rangePts(w13), range39=rangePts(w39), range79=rangePts(w79), range245=rangePts(w245);
+      const path13=pathPts(w13), path39=pathPts(w39), path79=pathPts(w79), path245=pathPts(w245);
+      const pos79=positionInRange(w79), pos245=positionInRange(w245);
+      const vol13=stdevReturns(w13), vol79=stdevReturns(w79), vol245=stdevReturns(w245);
+      const volRatio = (vol79>0) ? vol13/vol79 : 1;
+      const compression = clamp(1 - (range13/(range79+1)), 0, 1);
+      const expansion = clamp((range13/Math.max(1,range79))*2.4 + (range39/Math.max(1,range245))*1.1, 0, 2.2);
+      const energy79 = clamp(path79/2200, 0, 2.4);
+      const energy245 = clamp(path245/6500, 0, 2.4);
+      const fieldEnergy = clamp(0.52*energy79 + 0.48*energy245, 0, 2.4);
+      const efficiency79 = clamp(Math.abs(r79)/(path79+1), 0, 1);
+      const chop = clamp(1-efficiency79,0,1);
+      const tbias = takerBias(w39);
+      const directionFlow =
+        0.16*Math.tanh(r7/260) +
+        0.20*Math.tanh(r13/420) +
+        0.24*Math.tanh(r39/780) +
+        0.18*Math.tanh(r58/980) +
+        0.14*Math.tanh(r79/1250) +
+        0.08*Math.tanh(r245/2600);
+      const breakoutLong = clamp((pos79-0.72)*2.5,0,1) * clamp(Math.tanh(r13/350),0,1);
+      const breakoutShort = clamp((0.28-pos79)*2.5,0,1) * clamp(Math.tanh(-r13/350),0,1);
+      const revertLong = clamp((0.38-pos245)*2.0,0,1) * clamp(chop + compression,0,1);
+      const revertShort = clamp((pos245-0.62)*2.0,0,1) * clamp(chop + compression,0,1);
+      const volPulse = clamp((volRatio-0.78)/1.4,0,1);
+      const volumePulse = clamp(sumVol(w39)/(sumVol(w245)/6.28 + 1),0,3)/3;
+      const exhaustionRaw = clamp((range245/4200) + (path245/18000) + Math.abs(pos245-0.5)*0.9 + Math.max(0,volRatio-1.6)*0.55, 0, 2.8);
+      const exhaustionScore = sigmoid((exhaustionRaw-1.45)*2.0);
+      const adverseLong = clamp((-r13/550),0,1) * clamp(pos79,0,1);
+      const adverseShort = clamp((r13/550),0,1) * clamp(1-pos79,0,1);
+      const pLong = sigmoid(-0.22 + 1.16*directionFlow + 0.34*breakoutLong + 0.28*revertLong + 0.24*tbias + 0.52*fieldEnergy - 0.26*exhaustionScore);
+      const pShort = sigmoid(-0.22 - 1.16*directionFlow + 0.34*breakoutShort + 0.28*revertShort - 0.24*tbias + 0.52*fieldEnergy - 0.26*exhaustionScore);
+      const pBi = sigmoid(-0.28 + 0.76*fieldEnergy + 0.42*chop + 0.28*compression + 0.24*volPulse);
+      const directionMargin = Math.abs(pLong-pShort);
+      const edge = Math.max(pLong,pShort,pBi);
+      const preformationScore = clamp(sigmoid(-0.52 + 1.34*compression + 0.70*fieldEnergy + 0.42*volPulse - 0.26*exhaustionScore),0,1);
+      const formationScore = clamp(sigmoid(-0.58 + 0.94*fieldEnergy + 0.88*Math.abs(directionFlow) + 0.48*volumePulse + 0.26*expansion - 0.25*exhaustionScore),0,1);
+      const actualScore = clamp(sigmoid(-0.76 + 1.22*Math.abs(directionFlow) + 0.86*fieldEnergy + 0.55*expansion + 0.40*efficiency79 - 0.34*exhaustionScore),0,1);
+      const residualScore = clamp(sigmoid(-1.00 + 1.24*exhaustionScore + 0.48*chop + 0.22*fieldEnergy),0,1);
+      const dominant = Math.max(preformationScore, formationScore, actualScore, residualScore);
+      let omenState = 'RESIDUAL-WATCH';
+      if(edge < 0.44) omenState='DORMANT';
+      else if(dominant === actualScore) omenState='ACTUAL-STATE';
+      else if(dominant === formationScore) omenState='FORMATION';
+      else if(dominant === preformationScore) omenState='PRE-FORMATION';
+      let direction = 'NO-DIRECTION';
+      if(directionMargin >= 0.012){ direction = pLong > pShort ? 'LONG' : 'SHORT'; }
+      else if(edge >= 0.62){ direction = directionFlow >= 0 ? 'LONG' : 'SHORT'; }
+      const adverseScore = direction === 'LONG' ? adverseLong : direction === 'SHORT' ? adverseShort : Math.max(adverseLong, adverseShort);
+      const cleanPathEstimate = Math.max(range79*0.60, path79*0.36, range245*0.44, path245*0.17);
+      const stateWeight = {'PRE-FORMATION':0.76,'FORMATION':0.90,'ACTUAL-STATE':1.00,'RESIDUAL-WATCH':0.70,'DORMANT':0.0}[omenState] || 0;
+      const dominantStateScore = dominant;
+      const commandScore = clamp((0.45*edge)+(0.35*dominantStateScore)+(0.20*stateWeight),0,1);
+      const commandBand = commandScore >= 0.67 ? 'APEX' : commandScore >= 0.60 ? 'PRIME' : commandScore >= 0.54 ? 'FIELD' : commandScore >= 0.50 ? 'WATCH' : 'LOW';
+      const lowRangeRecoveryScore = clamp(sigmoid(-0.42 + 0.90*chop + 0.88*compression + 0.44*fieldEnergy + 0.32*volPulse - 0.26*exhaustionScore),0,1);
+      const recoveryBrickPoints = Math.max(0, Math.min(700, Math.max(path13*0.48, range13*0.82, path39*0.22, range39*0.55)));
+      const recoveryCandidate = lowRangeRecoveryScore >= 0.50 && recoveryBrickPoints >= 350;
+      return {
+        ready:true, t:last.t, close:last.c,
+        edge, pLong, pShort, pBi, directionMargin, direction, state:omenState,
+        preformationScore, formationScore, actualScore, residualScore,
+        stateWeight, dominantStateScore, commandScore, commandBand,
+        r7,r13,r39,r58,r79,r245, range13,range39,range79,range245, path13,path39,path79,path245,
+        pos79,pos245, vol13,vol79,vol245, volRatio, compression, expansion, fieldEnergy, efficiency79, chop, tbias,
+        cleanPathEstimate, adverseScore, exhaustionScore,
+        lowRangeRecoveryScore, recoveryBrickPoints, recoveryCandidate,
+        warnings: {
+          field: edge>=0.62 ? 'ACTIVE' : edge>=0.50 ? 'WATCH' : 'WAIT',
+          adverse: adverseScore>0.62 ? 'DANGER' : adverseScore>0.36 ? 'CAUTION' : 'OK',
+          exhaustion: exhaustionScore>0.72 ? 'DANGER' : exhaustionScore>0.54 ? 'CAUTION' : 'OK'
+        }
+      };
+    }
+
+    function canIssueCommand(f){
+      if(!f.ready) return {ok:false, why:f.reason || 'not ready'};
+      if(f.state === 'DORMANT') return {ok:false, why:'field dormant'};
+      if(f.direction === 'NO-DIRECTION') return {ok:false, why:'direction unresolved'};
+      const g = state.realismGate || {};
+      const permission = g.permission || 'WAIT';
+      const nextSlot = state.commandsToday.length + 1;
+      const behind = state.paceState === 'BEHIND';
+      const lowRangeMode = permission === 'RECOVERY_ONLY';
+      const reduced = permission === 'NO_MISSION' || permission === 'NO_1500_PROMISE' || permission === 'EARLY_WAIT';
+      if(reduced) return {ok:false, why:'realism gate: '+(g.label||permission)};
+      if(state.commandsToday.length >= state.mode.maxCommandsPerMYTDay) return {ok:false, why:'daily slot cap reached'};
+      if(state.lastCommandTs && (f.t - state.lastCommandTs) < state.mode.cooldownMinutes*60000) return {ok:false, why:'cooldown'};
+      let minScore = state.mode.minCommandScore;
+      let commandType = 'WARPATH';
+      let projected = f.cleanPathEstimate;
+      if(lowRangeMode || (behind && f.recoveryCandidate)){
+        commandType = lowRangeMode ? 'LOW_RANGE_SHIELD' : 'PACE_SHIELD';
+        minScore = Math.min(minScore, 0.48);
+        projected = Math.max(f.recoveryBrickPoints||0, Math.min(f.cleanPathEstimate, 700));
+        if(!f.recoveryCandidate && projected < 350) return {ok:false, why:'recovery brick below 350p'};
+      }else if(permission === 'WARPATH_CONDITIONAL'){
+        if(f.warnings.exhaustion === 'DANGER') return {ok:false, why:'conditional warpath blocked by exhaustion'};
+      }
+      if(f.commandScore < minScore) return {ok:false, why:'score below '+commandType+' threshold'};
+      if(nextSlot === 6 && state.mode.slot6RequiresBonusGate){
+        if(state.feedStatus !== 'LIVE') return {ok:false, why:'slot 6 requires live feed'};
+        if(f.warnings.field !== 'ACTIVE' && !f.recoveryCandidate) return {ok:false, why:'slot 6 requires active field or recovery brick'};
+        if(f.warnings.adverse === 'DANGER') return {ok:false, why:'slot 6 blocked by adverse path'};
+        if(f.warnings.exhaustion === 'DANGER') return {ok:false, why:'slot 6 blocked by exhaustion'};
+      }
+      return {ok:true, why:'pass · '+commandType, commandType, projectedPoints:projected};
+    }
+
+    function issueCommand(f, gate){
+      const slot = state.commandsToday.length + 1;
+      const projected = Math.max(0, Math.min(1500, gate && gate.projectedPoints ? gate.projectedPoints : f.cleanPathEstimate));
+      const cmd = {
+        slot, t:f.t, hm:mytHM(f.t), day:mytDate(f.t), price:f.close,
+        direction:f.direction, state:f.state, score:+f.commandScore.toFixed(4), band:f.commandBand,
+        commandType:(gate&&gate.commandType)||'WARPATH', realismGate:state.realismGate, paceState:state.paceState, recoveryState:state.recoveryState,
+        projectedPoints:+projected.toFixed(2), edge:+f.edge.toFixed(4), pLong:+f.pLong.toFixed(4), pShort:+f.pShort.toFixed(4), pBi:+f.pBi.toFixed(4),
+        chronosRule:timingRuleForState(f.state), chronosAtIssue:timingSnapshotForCommand({state:f.state, slot:slot, t:f.t})
+      };
+      state.commandsToday.push(cmd);
+      state.lastCommandTs = f.t;
+      refreshMissionAccounting();
+      const cLast = state.clusterRecords[state.clusterRecords.length-1];
+      if(cLast) cmd.clusterId = cLast.clusterId;
+      log('COMMAND '+slot+' · '+cmd.commandType+' · '+cmd.direction+' · '+cmd.state+' · '+cmd.score+' · @ '+fmt(cmd.price,7), slot>=6?'bonus':'command');
+      saveState('command');
+      emit('command', cmd);
+    }
+
+    function evaluate(candles, reason){
+      if(!Array.isArray(candles) || candles.length<1) return;
+      dayGuard(Date.now());
+      state.candles = candles.slice(-5000);
+      const last = state.candles[state.candles.length-1];
+      if(!last) return;
+      state.realismGate = liveRealismGate(state.candles, last.t || Date.now());
+      refreshMissionAccounting();
+      const f = computeFeatureSnapshot(state.candles);
+      if(f && f.ready){ f.realismGate = state.realismGate; f.paceState = state.paceState; f.recoveryState = state.recoveryState; }
+      state.lastFeature = f;
+      if(f.ready){ state.warnings = Object.assign({}, f.warnings, { feed:state.feedStatus, realism:state.realismGate.label, overlap:'CLUSTER58' }); } else { state.warnings = Object.assign({}, state.warnings, { feed:state.feedStatus, realism:state.realismGate.label, overlap:'CLUSTER58' }); }
+      if(f.ready && last.t !== state.lastCandleT){
+        state.lastCandleT = last.t;
+        const gate = canIssueCommand(f);
+        state.lastCandidate = { ts:last.t, gate:gate.why, ok:gate.ok, feature:f };
+        if(gate.ok) issueCommand(f, gate);
+      }
+      emit('state', snapshot());
+    }
+
+    function setMode(modeId){
+      if(MODE_REGISTRY[modeId]){
+        state.mode = MODE_REGISTRY[modeId];
+        log('MODE · '+state.mode.name+' · score '+state.mode.minCommandScore+' · cooldown '+state.mode.cooldownMinutes+'m · max '+state.mode.maxCommandsPerMYTDay, 'info');
+        saveState('mode');
+        emit('state', snapshot());
+      }
+    }
+
+    function addConfirmedPoints(pts){
+      state.confirmedPoints = Math.max(0, state.confirmedPoints + (+pts||0));
+      log('CONFIRMED POINTS +'+(+pts||0)+'p · total '+Math.round(state.confirmedPoints)+'p', 'info');
+      saveState('confirmed');
+      emit('state', snapshot());
+    }
+    function resetConfirmed(){
+      state.confirmedPoints = 0;
+      log('CONFIRMED POINTS RESET', 'info');
+      saveState('confirmed-reset');
+      emit('state', snapshot());
+    }
+
+    function onFeedStatus(payload){
+      state.feedText = payload && payload.text ? payload.text : '—';
+      const txt = state.feedText.toLowerCase();
+      state.feedStatus = txt.includes('live') ? 'LIVE' : txt.includes('stale') ? 'STALE' : txt.includes('offline') ? 'OFFLINE' : 'SYNC';
+      state.warnings.feed = state.feedStatus;
+      emit('state', snapshot());
+    }
+    function onFeedSource(payload){ state.source = payload && payload.source ? payload.source : '—'; emit('state', snapshot()); }
+    function onPrice(payload){
+      if(!payload) return;
+      state.latestPrice = payload.price;
+      state.latestPriceAt = payload.at || Date.now();
+      emit('state', snapshot());
+    }
+    function onBootstrap(payload, feedApi){
+      log('BOOTSTRAP · '+(payload && payload.candles ? payload.candles : 0)+' candles', 'info');
+      if(feedApi && typeof feedApi.getCandles === 'function') evaluate(feedApi.getCandles(), 'bootstrap');
+    }
+    function onCandle(payload, feedApi){ if(feedApi && typeof feedApi.getCandles==='function') evaluate(feedApi.getCandles(), payload && payload.reason || 'candle'); }
+    function onClosedSync(payload, feedApi){ if(feedApi && typeof feedApi.getCandles==='function') evaluate(feedApi.getCandles(), 'closedSync'); }
+    function onGap(payload){ log('CANDLE GAP · missing '+(payload.missingMinutes||'?')+'m · recovery required', 'warn'); }
+    function onFeedMemory(payload){ if(payload && payload.action) log('FEED MEMORY · '+payload.action+(payload.candles?' · '+payload.candles+' candles':''), 'info'); }
+    function onFeedError(payload){ if(payload && payload.message && payload.message !== 'NONE') log('FEED ERROR · '+payload.message, 'warn'); }
+
+    function bindFeedCallbacks(feedOptions){
+      const original = Object.assign({}, feedOptions.callbacks || {});
+      feedOptions.callbacks = Object.assign({}, original, {
+        status:function(p,a){ onFeedStatus(p); if(original.status) original.status(p,a); },
+        source:function(p,a){ onFeedSource(p); if(original.source) original.source(p,a); },
+        price:function(p,a){ onPrice(p); if(original.price) original.price(p,a); },
+        bootstrap:function(p,a){ onBootstrap(p,a); if(original.bootstrap) original.bootstrap(p,a); },
+        candle:function(p,a){ onCandle(p,a); if(original.candle) original.candle(p,a); },
+        closedSync:function(p,a){ onClosedSync(p,a); if(original.closedSync) original.closedSync(p,a); },
+        gap:function(p,a){ onGap(p); if(original.gap) original.gap(p,a); },
+        memory:function(p,a){ onFeedMemory(p); if(original.memory) original.memory(p,a); },
+        error:function(p,a){ onFeedError(p); if(original.error) original.error(p,a); },
+        tradeBucket:function(p,a){ if(original.tradeBucket) original.tradeBucket(p,a); }
+      });
+      return feedOptions;
+    }
+
+
+    function timingRuleForState(eventState){
+      const st = String(eventState||'FORMATION').toUpperCase();
+      if(PHASE20_CHRONOS.rules[st]) return PHASE20_CHRONOS.rules[st];
+      if(st.indexOf('LOW-RANGE')>=0) return PHASE20_CHRONOS.rules['CHOP-HARVEST'] || PHASE20_CHRONOS.rules['FORMATION'];
+      return PHASE20_CHRONOS.rules['FORMATION'];
+    }
+    function timingLabelFromAge(rule, ageMin){
+      ageMin = Math.max(0, +ageMin || 0);
+      if(!rule) return 'WAIT';
+      if(ageMin <= rule.immediateEndMin){
+        if(rule.personality === 'ACTIVE_NOW' || rule.personality === 'ACTIVE_CRAWL') return 'ACTIVE NOW';
+        if(rule.personality === 'EARLY_WATCH') return 'EARLY WATCH';
+        return 'FRESH';
+      }
+      if(ageMin <= rule.primeEndMin) return 'PRIME WINDOW';
+      if(ageMin <= rule.developingEndMin) return 'DEVELOPING';
+      if(ageMin <= rule.agingEndMin) return 'AGING';
+      return 'EXPIRED';
+    }
+    function timingSnapshotForCommand(cmd){
+      if(!cmd) return { label:'WAIT', personality:'WAIT', ageMinutes:0, windowText:'—', expiryText:'—', note:'No live command yet' };
+      const rule = timingRuleForState(cmd.state);
+      const ageMin = Math.max(0, Math.floor((Date.now()-(+cmd.t||Date.now()))/60000));
+      const label = timingLabelFromAge(rule, ageMin);
+      return {
+        label, personality:rule.personality, state:cmd.state, commandSlot:cmd.slot, ageMinutes:ageMin,
+        immediateEndMin:rule.immediateEndMin, primeEndMin:rule.primeEndMin, developingEndMin:rule.developingEndMin,
+        agingEndMin:rule.agingEndMin, expiredAfterMin:rule.expiredAfterMin,
+        windowText:'0–'+rule.primeEndMin+'m prime · '+(rule.primeEndMin+1)+'–'+rule.developingEndMin+'m developing',
+        expiryText:'expires after ~'+rule.expiredAfterMin+'m unless refreshed',
+        median500Min:rule.median500Min, median900Min:rule.median900Min, median1500Min:rule.median1500Min,
+        hit500Pct:rule.hit500Pct, hit900Pct:rule.hit900Pct, hit1500Pct:rule.hit1500Pct,
+        note:rule.operatorNote
+      };
+    }
+    function latestChronosTiming(){
+      const latest = state.commandsToday[state.commandsToday.length-1];
+      if(latest) return timingSnapshotForCommand(latest);
+      const f = state.lastFeature;
+      if(f && f.ready){
+        const rule = timingRuleForState(f.state);
+        return { label:timingLabelFromAge(rule,0), personality:rule.personality, state:f.state, commandSlot:null, ageMinutes:0,
+          immediateEndMin:rule.immediateEndMin, primeEndMin:rule.primeEndMin, developingEndMin:rule.developingEndMin, agingEndMin:rule.agingEndMin,
+          expiredAfterMin:rule.expiredAfterMin, windowText:'candidate timing · 0–'+rule.primeEndMin+'m prime if command fires', expiryText:'would expire after ~'+rule.expiredAfterMin+'m', note:rule.operatorNote };
+      }
+      return { label:'WAIT', personality:'WAIT', ageMinutes:0, windowText:'—', expiryText:'—', note:'Waiting for command memory and enough candles' };
+    }
+
+    function exportSession(feedApi){
+      return {
+        version:1,
+        exportedAt:Date.now(),
+        exportedAtMYT:mytDate(Date.now())+' '+mytHM(Date.now()),
+        symbol:'1000PEPEUSDT',
+        pointDefinition:'1 point = 0.0000001 price',
+        mode:state.mode,
+        officialEngine:PHASE16,
+        chronosModule:PHASE20_CHRONOS,
+        day:state.day,
+        commandsToday:state.commandsToday,
+        clusterRecords:state.clusterRecords,
+        projectedCleanPoints:state.projectedCleanPoints,
+        rawProjectedPoints:state.rawProjectedPoints,
+        clusterCappedPoints:state.clusterCappedPoints,
+        confirmedPoints:state.confirmedPoints,
+        realismGate:state.realismGate,
+        paceState:state.paceState,
+        recoveryState:state.recoveryState,
+        latestFeature:state.lastFeature,
+        warnings:state.warnings,
+        signalTiming:latestChronosTiming(),
+        logs:state.logs,
+        feedStatus: feedApi && feedApi.getStatus ? feedApi.getStatus() : null,
+        candleCount: state.candles.length
+      };
+    }
+
+    function snapshot(){
+      return {
+        mode:state.mode,
+        latestPrice:state.latestPrice,
+        latestPriceAt:state.latestPriceAt,
+        source:state.source,
+        feedText:state.feedText,
+        feedStatus:state.feedStatus,
+        candles:state.candles.length,
+        day:state.day,
+        commandsToday:state.commandsToday.slice(),
+        clusterRecords:state.clusterRecords.slice(),
+        projectedCleanPoints:state.projectedCleanPoints,
+        rawProjectedPoints:state.rawProjectedPoints,
+        clusterCappedPoints:state.clusterCappedPoints,
+        confirmedPoints:state.confirmedPoints,
+        realismGate:state.realismGate,
+        paceState:state.paceState,
+        recoveryState:state.recoveryState,
+        logs:state.logs.slice(),
+        lastFeature:state.lastFeature,
+        lastCandidate:state.lastCandidate,
+        warnings:state.warnings,
+        signalTiming:latestChronosTiming(),
+        memoryOk:state.memoryOk
+      };
+    }
+
+    const api = {
+      MODE_REGISTRY, PHASE16,
+      restoreState, saveState, clearState,
+      setMode, evaluate, bindFeedCallbacks,
+      addConfirmedPoints, resetConfirmed,
+      exportSession, snapshot,
+      log,
+      fmt, mytHM, mytDate,
+      _state:state
+    };
+    restoreState();
+    return api;
+  }
+
+  global.createOmenDashboardEngine = createOmenDashboardEngine;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const dash = createOmenDashboardEngine({ modeId:'WARPATH5', callbacks:{ state:render, log:renderLog }});
+  const modeSelect = $('modeSelect');
+  for(const k of Object.keys(dash.MODE_REGISTRY)){
+    const m = dash.MODE_REGISTRY[k];
+    const opt = document.createElement('option'); opt.value=m.id; opt.textContent=m.name + ' · ' + m.label; modeSelect.appendChild(opt);
+  }
+  modeSelect.value = dash.snapshot().mode.id;
+  modeSelect.addEventListener('change', () => dash.setMode(modeSelect.value));
+  $('add350').addEventListener('click',()=>dash.addConfirmedPoints(350));
+  $('add500').addEventListener('click',()=>dash.addConfirmedPoints(500));
+  $('add900').addEventListener('click',()=>dash.addConfirmedPoints(900));
+  $('resetConfirmed').addEventListener('click',()=>dash.resetConfirmed());
+  $('clearBtn').addEventListener('click',()=>{ if(confirm('Clear today\'s Omen command/session memory?')) dash.clearState(); });
+
+  const feedOptions = dash.bindFeedCallbacks({
+    binanceSymbol:'1000PEPEUSDT', binanceWsSymbol:'1000pepeusdt', bingxSymbol:'1000PEPE-USDT',
+    bootstrapLimit:1500, maxCandles:5000, startTradeStream:true,
+    callbacks:{
+      price:function(p){
+        $('livePrice').textContent = p.priceText || fmtPrice(p.price);
+        const hi = Number.isFinite(+p.high24h) ? fmtPrice(p.high24h) : '—';
+        const lo = Number.isFinite(+p.low24h) ? fmtPrice(p.low24h) : '—';
+        const pct = Number.isFinite(+p.changePct) ? ' · ' + (+p.changePct).toFixed(2) + '%' : '';
+        $('range24').textContent = '24H ' + lo + ' → ' + hi + pct;
+      },
+      status:function(p){ $('feedStatus').textContent = p.text || '—'; },
+      source:function(p){ $('feedSource').textContent = (p.source || '—').toUpperCase(); },
+      closedSync:function(p){ $('candleStatus').textContent = 'candles ' + (feed.getStatus().candles || 0) + ' · closed +' + (p.added || 0); }
+    }
+  });
+  const feed = createOmenLiveFeed(feedOptions);
+  $('syncBtn').addEventListener('click',()=>{ feed.sync(); dash.log('MANUAL SYNC REQUESTED','info'); });
+  $('exportBtn').addEventListener('click',()=>exportSession());
+
+  function fmtPrice(p){ return Number(p).toFixed(7); }
+  function pct(v){ return Math.max(0,Math.min(100,Number(v||0)*100)); }
+  function clsFor(value){ value=String(value||''); if(value==='LIVE'||value==='ACTIVE'||value==='OK') return 'ok'; if(value==='CAUTION'||value==='WATCH'||value==='SYNC'||value==='STALE') return 'warn'; if(value==='DANGER'||value==='OFFLINE') return 'bad'; return ''; }
+  function mytClock(){
+    const now = Date.now();
+    const d = new Date(now + (new Date().getTimezoneOffset()+480)*60000);
+    $('mytClock').textContent = 'MYT ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+    $('dayLabel').textContent = d.toISOString().slice(0,10);
+  }
+  setInterval(mytClock,1000); mytClock();
+
+
+  // === PHASE27 VOR SCAR-TISSUE PATCH — UI/SCORING ONLY, NO LIVE-FEED TOUCH ===
+  function vorClamp(x,a,b){ x=Number(x); if(!Number.isFinite(x)) x=0; return Math.max(a,Math.min(b,x)); }
+  function vorSigmoid(x){ return 1/(1+Math.exp(-x)); }
+  function vorPct01(x,lo,hi){ return vorClamp((Number(x||0)-lo)/(hi-lo),0,1); }
+  function vorSignedDir(d){ return d==='LONG' ? 1 : d==='SHORT' ? -1 : 0; }
+  function vorStateFromScore(score){
+    if(score >= 0.55) return {state:'PRIME', cls:'vorPrime', bias:'PRIORITIZE', pill:'ok'};
+    if(score >= 0.30) return {state:'STRONG', cls:'vorStrong', bias:'GOOD WATCH', pill:'ok'};
+    if(score >= 0.00) return {state:'POSITIVE', cls:'vorPositive', bias:'SUPPORTIVE', pill:'warn'};
+    if(score >= -0.35) return {state:'NEUTRAL', cls:'vorNeutral', bias:'USE OMEN', pill:''};
+    return {state:'REDUCE', cls:'vorReduce', bias:'TACTICAL ONLY', pill:'bad'};
+  }
+  function vorCellLabel(v, pos, neg, mid){
+    if(v >= 0.28) return pos;
+    if(v <= -0.22) return neg;
+    return mid || 'NEUTRAL';
+  }
+  function vorCompanionSnapshot(s, f){
+    const nowT = f && Number.isFinite(+f.t) ? +f.t : Date.now();
+    const dir = f ? f.direction : 'NO-DIRECTION';
+    const rows = (s.commandsToday || []).filter(c => Number.isFinite(+c.t) && Math.abs(nowT - c.t) <= 39*60000);
+    let same=0, opp=0;
+    rows.forEach(c => { if(c.direction === dir) same++; else if(c.direction==='LONG'||c.direction==='SHORT') opp++; });
+    let label='LONELY', score=0, note='No recent companion command inside 39m.';
+    if(same>0 && opp===0){ label='CONFIRMED'; score=0.70; note='Same-direction companion found inside 39m.'; }
+    else if(same>0 && opp>0){ label='MIXED'; score=0.15; note='Same and opposing companions both present.'; }
+    else if(opp>0){ label='OPPOSED'; score=-0.40; note='Opposing companion found inside 39m.'; }
+    return {label, score, note, same, opp, count:rows.length};
+  }
+  function computeVORScar(s){
+    const f = s && s.lastFeature;
+    if(!f || !f.ready) return null;
+    const dirSign = vorSignedDir(f.direction);
+    const mom13 = Number(f.r13||0);
+    const momSign = mom13>0 ? 1 : mom13<0 ? -1 : 0;
+    const energy = vorClamp(Number(f.fieldEnergy||0)/2.4,0,1);
+    const volPulse = vorPct01(f.volRatio,0.75,2.0);
+    const bodyProxy = vorClamp(Number(f.efficiency79||0),0,1);
+    const rangeProxy = vorClamp(Number(f.range79||0)/1600,0,1);
+    const fakePenalty = (f.chop>0.72 && rangeProxy<0.42) ? 1 : 0;
+    const thinPenalty = (energy<0.28 && volPulse<0.20) ? 1 : 0;
+
+    // EPCI: Entropic Participation Conviction Index
+    const EPCI = vorClamp(
+      0.28*volPulse + 0.24*energy + 0.18*bodyProxy + 0.14*rangeProxy
+      + 0.10*(f.warnings && f.warnings.field==='ACTIVE' ? 1:0)
+      - 0.22*thinPenalty - 0.18*fakePenalty,
+      -1,1
+    );
+
+    // FMTF: Fractional Memory Tension Field
+    const snap = (momSign!==0 && dirSign!==0 && dirSign!==momSign) ? Math.abs(Math.tanh(mom13/900))*energy : 0;
+    const brk = (momSign!==0 && dirSign!==0 && dirSign===momSign) ? Math.abs(Math.tanh(mom13/900))*energy : 0;
+    const FMTF = vorClamp(0.60*snap + 0.25*(f.pos245<0.32||f.pos245>0.68?1:0) - 0.42*brk - 0.18*(f.exhaustionScore>0.72?1:0), -1,1);
+
+    // FPES: Fractional Persistence / Exhaustion Splitter
+    const firstTouch = (Math.abs(f.r13)>480 && Math.abs(f.r39)<640) ? 1 : 0;
+    const exhaust = (f.exhaustionScore>0.68 && energy<0.52) ? 1 : 0;
+    const FPES = vorClamp(0.38*Math.abs(Math.tanh(f.r79/1300)) + 0.22*Math.abs(Math.tanh(f.r39/900)) + 0.22*energy + 0.18*(f.state==='ACTUAL-STATE'?1:0) - 0.24*firstTouch - 0.42*exhaust, -1,1);
+
+    // PDCF: Paraconsistent Defeasible Conflict Force
+    const contradiction = vorClamp(1 - (Number(f.directionMargin||0)*24),0,1);
+    const opposed = (f.adverseScore>0.46) ? 1 : 0;
+    const confirmed = (f.directionMargin>0.035 && f.warnings && f.warnings.adverse !== 'DANGER') ? 1 : 0;
+    const PDCF = vorClamp(0.42*confirmed - 0.50*opposed - 0.25*(contradiction>0.72?1:0) + 0.18*(1-contradiction), -1,1);
+
+    // CCT: Companion Confirmation Tensor
+    const comp = vorCompanionSnapshot(s, f);
+    const CCT = vorClamp(comp.score, -1, 1);
+
+    // CFR: Chop/Fake Rhythm Firewall
+    const CFR = vorClamp(-0.42*(f.chop>0.74?1:0) - 0.28*fakePenalty + 0.10*(f.chop<0.48 && rangeProxy>0.55 ? 1:0), -1,1);
+
+    // Phase25.7 selected profile: COMPANION
+    const score = vorClamp(0.20*EPCI + 0.16*FMTF + 0.14*FPES + 0.12*PDCF + 0.30*CCT + 0.08*CFR, -1, 1);
+    const meta = vorStateFromScore(score);
+    const positiveProxy = score > 0 ? 1 : 0;
+    const rescueActive = positiveProxy < 1 && (s.commandsToday||[]).length < s.mode.maxCommandsPerMYTDay;
+    return {score, meta, EPCI,FMTF,FPES,PDCF,CCT,CFR, comp, rescueActive, positiveProxy, f};
+  }
+  function renderVOR(s){
+    const vor = computeVORScar(s);
+    const chip = $('vorChip');
+    if(!vor){
+      if(chip){ chip.textContent='VOR WAIT'; chip.className='chip warn'; }
+      ['vorStateVal','vorScoreVal','vorRescueVal','vorCompanionVal','vorEPCIVal','vorFMTFVal','vorFPESVal','vorPDCFVal','vorCFRVal','vorOperatorBias'].forEach(id=>{ const el=$(id); if(el) el.textContent='—'; });
+      if($('vorRankStack')) $('vorRankStack').innerHTML = '<div class="small">Waiting for OMEN feature field.</div>';
+      return;
+    }
+    if(chip){ chip.textContent='VOR ' + vor.meta.state; chip.className='chip ' + (vor.meta.pill||''); }
+    $('vorStateVal').textContent = vor.meta.state;
+    $('vorStateVal').className = 'val vorScoreBig ' + vor.meta.cls;
+    $('vorStateSmall').textContent = 'Scar-tissue score only · OMEN remains command authority';
+    $('vorScoreVal').textContent = (vor.score>=0?'+':'') + vor.score.toFixed(2);
+    $('vorScoreSmall').textContent = 'EPCI '+vor.EPCI.toFixed(2)+' · FMTF '+vor.FMTF.toFixed(2)+' · FPES '+vor.FPES.toFixed(2)+' · PDCF '+vor.PDCF.toFixed(2)+' · CCT '+vor.CCT.toFixed(2)+' · CFR '+vor.CFR.toFixed(2);
+
+    $('vorRescueVal').textContent = vor.rescueActive ? 'RESCUE ACTIVE' : 'NORMAL';
+    $('vorRescueVal').className = 'val ' + (vor.rescueActive?'vorPrime':'vorStrong');
+    $('vorRescueSmall').textContent = vor.rescueActive ? 'VOR is starved. Re-admit OMEN neutral/recovery events.' : 'VOR is not starving current OMEN view.';
+
+    $('vorCompanionVal').textContent = vor.comp.label;
+    $('vorCompanionVal').className = 'val ' + (vor.comp.label==='CONFIRMED'?'vorStrong':vor.comp.label==='OPPOSED'?'vorReduce':vor.comp.label==='MIXED'?'vorPrime':'vorNeutral');
+    $('vorCompanionSmall').textContent = vor.comp.note;
+
+    $('vorEPCIVal').textContent = vorCellLabel(vor.EPCI,'TRUE','THIN/FAKE','NORMAL');
+    $('vorEPCISmall').textContent = 'Participation conviction ' + vor.EPCI.toFixed(2);
+    $('vorFMTFVal').textContent = vorCellLabel(vor.FMTF,'SNAP','BREAK','NEUTRAL');
+    $('vorFMTFSmall').textContent = 'Memory tension ' + vor.FMTF.toFixed(2);
+    $('vorFPESVal').textContent = vorCellLabel(vor.FPES,'DEEP','EXHAUST','NORMAL');
+    $('vorFPESSmall').textContent = 'Persistence / exhaustion ' + vor.FPES.toFixed(2);
+    $('vorPDCFVal').textContent = vorCellLabel(vor.PDCF,'CONFIRMED','OPPOSED','MIXED');
+    $('vorPDCFSmall').textContent = 'Conflict court ' + vor.PDCF.toFixed(2);
+    $('vorCFRVal').textContent = vorCellLabel(vor.CFR,'CLEAN','CHOP','NORMAL');
+    $('vorCFRSmall').textContent = 'Chop/fake firewall ' + vor.CFR.toFixed(2);
+    $('vorOperatorBias').textContent = vor.meta.bias;
+    $('vorOperatorSmall').textContent = vor.meta.state==='REDUCE' ? 'Tactical/reduce/wait. No override.' : 'Use as confidence ranking only. No override.';
+
+    renderVORRankStack(s, vor);
+  }
+  function renderVORRankStack(s, vor){
+    const box = $('vorRankStack'); if(!box) return;
+    const rows = [];
+    const f = s.lastFeature;
+    if(f && f.ready){
+      rows.push({rank:'#NOW', title:f.direction + ' · ' + f.state, score:vor.score, sub:'Current OMEN feature field · Chronos ' + (((s.signalTiming||{}).label)||'WAIT')});
+    }
+    (s.commandsToday||[]).slice(-4).reverse().forEach((c,i)=>{
+      const proxy = vorClamp((Number(c.score||0)-0.50)*1.6, -0.35, 0.55);
+      rows.push({rank:'#'+c.slot, title:c.direction + ' · ' + c.state, score:proxy, sub:c.hm + ' · OMEN command score ' + Number(c.score||0).toFixed(2) + ' · proxy rank only'});
+    });
+    if(!rows.length){ box.innerHTML = '<div class="small">No current event stack yet.</div>'; return; }
+    box.innerHTML = rows.map(r=>{
+      const m = vorStateFromScore(r.score);
+      return '<div class="vorRankRow"><div class="vorRankMain">'+r.rank+'</div><div><div class="vorRankMain">'+r.title+'</div><div class="vorRankSub">'+r.sub+'</div></div><div class="'+m.cls+'">'+(r.score>=0?'+':'')+r.score.toFixed(2)+'</div></div>';
+    }).join('');
+  }
+
+
+  function render(s){
+    if(!s) return;
+    $('modeChip').textContent = s.mode.name.toUpperCase();
+    $('slotChip').textContent = 'SLOTS ' + s.commandsToday.length + '/' + s.mode.maxCommandsPerMYTDay;
+    const g = s.realismGate || {};
+    $('realismChip').textContent = 'REALISM ' + (g.label || '—').toUpperCase();
+    $('realismChip').className = 'chip ' + clsForRealism(g);
+    $('clusterChip').textContent = 'CLUSTER58 ' + ((s.clusterRecords && s.clusterRecords.length) || 0);
+    $('clusterChip').className = 'chip ok';
+    $('memoryChip').textContent = s.memoryOk ? 'MEM OK' : 'MEM BLOCKED';
+    $('memoryChip').className = 'chip ' + (s.memoryOk?'ok':'bad');
+    $('feedChip').textContent = 'FEED ' + s.feedStatus;
+    $('feedChip').className = 'chip ' + clsFor(s.feedStatus);
+    $('candleStatus').textContent = 'candles ' + (s.candles || 0);
+    modeSelect.value = s.mode.id;
+    $('slotSub').textContent = s.mode.name + ' · score ' + s.mode.minCommandScore.toFixed(2) + ' · cooldown ' + s.mode.cooldownMinutes + 'm · max ' + s.mode.maxCommandsPerMYTDay + ' · gate ' + ((s.realismGate&&s.realismGate.label)||'—');
+    renderRealism(s);
+    renderChronos(s);
+    renderVOR(s);
+
+    const f = s.lastFeature;
+    const latestCommand = s.commandsToday[s.commandsToday.length-1];
+    const can = s.lastCandidate;
+    let word='WAIT', action='Omen is waiting for enough live structure.', reason='No valid command yet.', wordCls='wait';
+    if(s.feedStatus==='STALE' || s.feedStatus==='OFFLINE'){
+      word='NO COMMAND'; action='Feed is stale or offline.'; reason='Sync/reconnect before acting.'; wordCls='wait';
+    }else if(latestCommand && Date.now()-latestCommand.t < 90*60000){
+      word = (latestCommand.slot===6?'BONUS ':'') + latestCommand.direction;
+      action = 'Command ' + latestCommand.slot + ' · ' + latestCommand.state + ' · score ' + latestCommand.score.toFixed(2);
+      reason = 'Issued at ' + latestCommand.hm + ' @ ' + fmtPrice(latestCommand.price) + ' · cluster-capped meter ' + Math.round(s.clusterCappedPoints||s.projectedCleanPoints||0) + 'p · Chronos ' + ((s.signalTiming&&s.signalTiming.label)||'—');
+      wordCls = latestCommand.slot===6 ? 'bonus' : latestCommand.direction==='LONG' ? 'long' : 'short';
+    }else if(f && f.ready){
+      if(f.state==='DORMANT'){ word='DORMANT'; action='Field is not strong enough for command.'; reason='Edge ' + f.edge.toFixed(2) + ' · candidate ' + (can?can.gate:'—'); }
+      else if(can && can.ok){ word=f.direction; action='Candidate passed. Waiting for command slot render.'; reason=f.state + ' · score ' + f.commandScore.toFixed(2); wordCls=f.direction==='LONG'?'long':'short'; }
+      else { word='WATCH'; action=f.state + ' · ' + f.direction + ' field observed.'; reason='Candidate gate: ' + (can?can.gate:'evaluating') + ' · score ' + f.commandScore.toFixed(2); wordCls='wait'; }
+    }else if(f && !f.ready){ reason = f.reason; }
+    $('commandWord').textContent = word; $('commandWord').className = 'word ' + wordCls; $('commandAction').textContent = action; $('commandReason').textContent = reason;
+
+    const proj = Math.round(s.clusterCappedPoints||s.projectedCleanPoints||0); const raw = Math.round(s.rawProjectedPoints||0); const conf = Math.round(s.confirmedPoints||0);
+    $('projectedMeterTxt').textContent = proj + ' / 1500p'; $('projectedMeter').style.width = Math.min(100,proj/1500*100)+'%';
+    $('rawMeterTxt').textContent = raw + 'p raw'; $('rawMeter').style.width = Math.min(100,raw/1500*100)+'%';
+    $('confirmedMeterTxt').textContent = conf + ' / 1500p'; $('confirmedMeter').style.width = Math.min(100,conf/1500*100)+'%';
+
+    renderSlots(s.commandsToday, s.mode.maxCommandsPerMYTDay);
+    renderScores(f);
+    renderWarnings(s, f);
+    renderLog(null, s);
+  }
+
+
+
+  function renderChronos(s){
+    const t = (s && s.signalTiming) || {};
+    const label = t.label || 'WAIT';
+    $('chronosLabel').textContent = label;
+    let cls='chronoLabel ';
+    if(label.indexOf('ACTIVE')>=0) cls+='active'; else if(label.indexOf('PRIME')>=0 || label.indexOf('EARLY')>=0) cls+='prime'; else if(label.indexOf('DEVELOPING')>=0) cls+='dev'; else if(label.indexOf('AGING')>=0) cls+='aging'; else if(label.indexOf('EXPIRED')>=0) cls+='expired';
+    $('chronosLabel').className = cls;
+    $('chronosPersonality').textContent = (t.personality || '—') + (t.commandSlot ? ' · command #' + t.commandSlot : ' · candidate');
+    $('chronosAge').textContent = Number.isFinite(+t.ageMinutes) ? Math.round(t.ageMinutes) + 'm' : '—';
+    $('chronosExpiry').textContent = t.expiryText || '—';
+    $('chronosWindow').textContent = t.windowText || '—';
+    $('chronosStateNote').textContent = t.note || '—';
+    const m500 = Number.isFinite(+t.median500Min) ? Math.round(t.median500Min)+'m to 500p' : '—';
+    const m900 = Number.isFinite(+t.median900Min) ? ' · '+Math.round(t.median900Min)+'m to 900p' : '';
+    $('chronosMedian').textContent = m500 + m900;
+    const h500 = Number.isFinite(+t.hit500Pct) ? Math.round(t.hit500Pct)+'% 500p' : '—';
+    const h900 = Number.isFinite(+t.hit900Pct) ? ' · '+Math.round(t.hit900Pct)+'% 900p' : '';
+    $('chronosHitRate').textContent = h500 + h900;
+  }
+
+  function renderRealism(s){
+    const g = s.realismGate || {};
+    $('realismGateVal').textContent = g.label || '—';
+    $('realismGateVal').style.color = colorForRealism(g);
+    $('realismGateSmall').textContent = (g.permission || '—') + ' · H+12 historical allowed success 97.60%';
+    $('projectedRangeVal').textContent = Math.round(g.projectedRangePoints || 0) + 'p';
+    $('observedRangeSmall').textContent = 'Observed so far ' + Math.round(g.observedRangePoints || 0) + 'p · path ' + Math.round(g.closePathPoints || 0) + 'p';
+    $('checkpointVal').textContent = g.checkpointH ? 'H+'+g.checkpointH : 'EARLY';
+    $('checkpointSmall').textContent = 'Elapsed H+' + (g.elapsedHours || 0).toFixed ? Number(g.elapsedHours||0).toFixed(2) : (g.elapsedHours || '—');
+    $('paceVal').textContent = s.paceState || '—';
+    $('paceVal').style.color = (s.paceState==='BEHIND') ? 'var(--gold)' : (s.paceState==='AHEAD'?'var(--green)':'var(--muted)');
+    $('recoverySmall').textContent = s.recoveryState || '—';
+  }
+  function clsForRealism(g){
+    const p = g && g.permission || '';
+    if(p==='FULL_WARPATH' || p==='WARPATH_CONDITIONAL') return 'ok';
+    if(p==='RECOVERY_ONLY' || p==='NO_1500_PROMISE' || p==='EARLY_WAIT') return 'warn';
+    if(p==='NO_MISSION') return 'bad';
+    return '';
+  }
+  function colorForRealism(g){
+    const cls = clsForRealism(g);
+    if(cls==='ok') return 'var(--green)';
+    if(cls==='warn') return 'var(--gold)';
+    if(cls==='bad') return 'var(--red)';
+    return 'var(--muted)';
+  }
+
+  function renderSlots(commands,max){
+    const box = $('slotList'); box.innerHTML='';
+    for(let i=1;i<=max;i++){
+      const c = commands.find(x=>x.slot===i);
+      const div = document.createElement('div');
+      if(c){ div.className = 'slot ' + (c.direction==='LONG'?'long':'short') + (c.slot===6?' bonus':'');
+        div.innerHTML = '<div class="slotNum">#'+i+'</div><div><div class="slotMain">'+escapeHtml(c.direction)+' · '+escapeHtml(c.commandType||'WARPATH')+' · '+escapeHtml(c.band)+'</div><div class="slotMeta">'+escapeHtml(c.hm)+' · @ '+fmtPrice(c.price)+' · cluster '+escapeHtml(c.clusterId||'—')+' · credit '+Math.round(c.projectedPoints)+'p · Chronos '+escapeHtml((c.chronosAtIssue&&c.chronosAtIssue.label)||'—')+'</div></div><div class="slotScore mono">'+Number(c.score).toFixed(2)+'</div>';
+      }else{ div.className='slot empty'; div.innerHTML='<div class="slotNum">#'+i+'</div><div><div class="slotMain">Empty command slot</div><div class="slotMeta">Waiting for score/cooldown/state gate</div></div><div class="slotScore mono">—</div>'; }
+      box.appendChild(div);
+    }
+  }
+  function renderScores(f){
+    const box = $('scoreBars');
+    if(!f || !f.ready){ $('stateVal').textContent='—'; $('stateSmall').textContent=f&&f.reason?f.reason:'waiting for candles'; $('directionVal').textContent='—'; $('directionSmall').textContent='—'; box.innerHTML=''; return; }
+    $('stateVal').textContent=f.state; $('stateSmall').textContent='edge '+f.edge.toFixed(2)+' · command '+f.commandScore.toFixed(2)+' · '+f.commandBand;
+    $('directionVal').textContent=f.direction; $('directionSmall').textContent='long '+f.pLong.toFixed(2)+' · short '+f.pShort.toFixed(2)+' · bi '+f.pBi.toFixed(2);
+    const rows=[['Edge',f.edge,''],['Pre-Formation',f.preformationScore,''],['Formation',f.formationScore,''],['Actual-State',f.actualScore,'green'],['Residual-Watch',f.residualScore,'red'],['Projected Clean Path',Math.min(1,f.cleanPathEstimate/1500),'violet']];
+    box.innerHTML = rows.map(r=>'<div class="barBox"><div class="barTop"><span>'+r[0]+'</span><span>'+ (r[0].includes('Path')?Math.round(f.cleanPathEstimate)+'p':(r[1]*100).toFixed(0)+'%') +'</span></div><div class="bar"><div class="fill '+r[2]+'" style="width:'+Math.max(0,Math.min(100,r[1]*100))+'%"></div></div></div>').join('');
+  }
+  function renderWarnings(s,f){
+    const w = s.warnings || {};
+    $('fieldWarn').textContent = w.field || '—'; $('fieldWarn').style.color = colorFor(w.field);
+    $('adverseWarn').textContent = w.adverse || '—'; $('adverseWarn').style.color = colorFor(w.adverse);
+    $('exhaustWarn').textContent = w.exhaustion || '—'; $('exhaustWarn').style.color = colorFor(w.exhaustion);
+    $('realismWarn').textContent = (s.realismGate&&s.realismGate.label)||w.realism||'—'; $('realismWarn').style.color = colorForRealism(s.realismGate||{});
+    $('overlapWarn').textContent = 'CLUSTER58'; $('overlapWarn').style.color = 'var(--green)';
+    const can = s.lastCandidate;
+    $('candidateVal').textContent = can ? (can.ok?'PASS':'BLOCK') : '—'; $('candidateVal').style.color = can && can.ok ? 'var(--green)' : 'var(--gold)';
+    $('candidateSmall').textContent = can ? can.gate : 'waiting';
+  }
+  function colorFor(v){ v=String(v||''); if(v==='ACTIVE'||v==='OK'||v==='LIVE')return 'var(--green)'; if(v==='DANGER'||v==='OFFLINE')return 'var(--red)'; if(v==='CAUTION'||v==='WATCH'||v==='WAIT'||v==='STALE')return 'var(--gold)'; return 'var(--muted)'; }
+  function renderLog(row,snap){
+    const s = snap || dash.snapshot(); const logs = s.logs || [];
+    $('logCount').textContent = logs.length + ' events';
+    $('log').innerHTML = logs.slice(0,80).map(x=>'<div class="logRow '+escapeHtml(x.type||'info')+'"><span class="t">'+escapeHtml(x.hm||'--:--')+'</span> '+escapeHtml(x.text||'')+'</div>').join('');
+  }
+  function escapeHtml(s){ return String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+  function exportSession(){
+    const payload = dash.exportSession(feed);
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'omen_live_session_' + payload.day + '_' + Date.now() + '.json';
+    document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);
+    dash.log('SESSION EXPORTED','info');
+  }
+  window.addEventListener('beforeunload',()=>{ try{ dash.saveState('beforeunload'); feed.saveMemory('beforeunload'); }catch(_){} });
+  dash.log('OMEN DASHBOARD BOOT','info');
+  render(dash.snapshot());
+  feed.start();
+})();
+</script>
+
+
+<script>
+/* === PHASE32.2 ORACLE HORIZON ROW CLEANUP — DOM READ ONLY === */
+(function(){
+  function $(id){return document.getElementById(id)}
+  function text(id){var el=$(id);return el?String(el.textContent||'').trim():''}
+  function set(id,v){var el=$(id); if(el) el.textContent=v}
+  function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
+  function numFrom(s){var m=String(s||'').match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):NaN}
+  function cls(g){if(g==='S')return'oracle32GradeS'; if(g==='A'||g==='A-')return'oracle32GradeA'; if(g==='B+'||g==='B')return'oracle32GradeB'; if(g==='C+'||g==='C')return'oracle32GradeC'; if(g==='D')return'oracle32GradeD'; return'oracle32GradeX'}
+  function grade(score,blocked){if(blocked)return'X'; if(score>=88)return'S'; if(score>=78)return'A'; if(score>=70)return'A-'; if(score>=62)return'B+'; if(score>=55)return'B'; if(score>=45)return'C'; if(score>=35)return'D'; return'X'}
+
+  function minutesFromText(s){
+    s=String(s||'').toLowerCase();
+    var h=s.match(/(\d+(?:\.\d+)?)\s*h/);
+    var m=s.match(/(\d+(?:\.\d+)?)\s*m/);
+    var total=0, found=false;
+    if(h){total += parseFloat(h[1])*60; found=true;}
+    if(m){total += parseFloat(m[1]); found=true;}
+    if(found) return total;
+    var n=numFrom(s);
+    return Number.isFinite(n)?n:NaN;
+  }
+
+  function ruleEnds(label){
+    label=String(label||'').toUpperCase();
+    if(label.indexOf('ACTIVE')>=0) return {immediate:30, prime:39, develop:79, expire:120};
+    if(label.indexOf('PRIME')>=0) return {immediate:30, prime:39, develop:79, expire:120};
+    if(label.indexOf('DEVELOPING')>=0) return {immediate:30, prime:39, develop:79, expire:160};
+    if(label.indexOf('EARLY')>=0) return {immediate:30, prime:39, develop:79, expire:160};
+    if(label.indexOf('AGING')>=0) return {immediate:30, prime:39, develop:79, expire:180};
+    if(label.indexOf('EXPIRED')>=0) return {immediate:30, prime:39, develop:79, expire:0};
+    return {immediate:30, prime:39, develop:79, expire:0};
+  }
+
+  function readAgeProof(){
+    var fields = [
+      text('chronosAge'), text('chronosSignalAge'), text('signalAge'), text('ageVal'),
+      text('chronosWindow'), text('chronosExpiry'), text('chronosNote')
+    ].join(' | ');
+    var age = NaN, source = 'NONE';
+
+    var ageMatch = fields.match(/age[^0-9]*(\d+(?:\.\d+)?)\s*m/i);
+    if(ageMatch){ age = parseFloat(ageMatch[1]); source = 'CHRONOS_AGE_TEXT'; }
+
+    if(!Number.isFinite(age)){
+      var simple = minutesFromText(fields);
+      if(Number.isFinite(simple)){ age = simple; source = 'CHRONOS_VISIBLE_MINUTES'; }
+    }
+
+    return {age:Number.isFinite(age)?Math.max(0,age):NaN, source:source, raw:fields};
+  }
+
+  function horizonGuard(label){
+    var ageProof = readAgeProof();
+    var ends = ruleEnds(label);
+    var u = String(label||'').toUpperCase();
+
+    if(u.indexOf('WAIT')>=0 || u===''){
+      return {horizon:'WAIT', validity:'WAIT', age:null, left:null, proof:ageProof.source, safe:false, reason:'no command timing yet'};
+    }
+    if(u.indexOf('EXPIRED')>=0){
+      return {horizon:'EXPIRED', validity:'EXPIRED', age:Number.isFinite(ageProof.age)?ageProof.age:null, left:0, proof:ageProof.source, safe:true, reason:'Chronos expired'};
+    }
+    if(!Number.isFinite(ageProof.age)){
+      return {horizon:'HORIZON UNKNOWN', validity:'UNKNOWN', age:null, left:null, proof:'NO_AGE_PROOF', safe:false, reason:'command age unavailable after refresh'};
+    }
+
+    var age = ageProof.age;
+    var horizon = 'WAIT';
+    if(age <= ends.immediate) horizon = 'NOW–30m';
+    else if(age <= ends.prime) horizon = 'NOW–39m';
+    else if(age <= ends.develop) horizon = '39–79m';
+    else if(age <= ends.expire) horizon = 'LATE / REDUCE';
+    else horizon = 'EXPIRED';
+
+    var validity = 'VALID';
+    if(horizon === '39–79m') validity = 'DEVELOPING';
+    if(horizon === 'LATE / REDUCE') validity = 'AGING';
+    if(horizon === 'EXPIRED') validity = 'EXPIRED';
+
+    return {horizon:horizon, validity:validity, age:age, left:Math.max(0, ends.expire-age), proof:ageProof.source, safe:true, reason:'age proven'};
+  }
+
+  function vscore(v){v=String(v||'').toUpperCase(); if(v.indexOf('PRIME')>=0)return 18; if(v.indexOf('STRONG')>=0)return 14; if(v.indexOf('POSITIVE')>=0)return 9; if(v.indexOf('NEUTRAL')>=0)return 3; if(v.indexOf('REDUCE')>=0)return -18; return 0}
+  function cscore(c){c=String(c||'').toUpperCase(); if(c.indexOf('ACTIVE')>=0)return 18; if(c.indexOf('PRIME')>=0)return 16; if(c.indexOf('EARLY')>=0)return 5; if(c.indexOf('DEVELOPING')>=0)return 7; if(c.indexOf('AGING')>=0)return -8; if(c.indexOf('EXPIRED')>=0)return -25; return 0}
+  function rscore(r){r=String(r||'').toUpperCase(); var n=numFrom(r); if(Number.isFinite(n))return clamp((n-45)/3.2,-8,15); if(r.indexOf('FULL')>=0||r.indexOf('WARPATH')>=0)return 14; if(r.indexOf('CONDITIONAL')>=0)return 8; if(r.indexOf('RECOVERY')>=0||r.indexOf('EARLY')>=0)return 3; if(r.indexOf('NO')>=0)return -14; return 0}
+  function warningPenalty(){var t=[text('warningBox'),text('feedStatus'),text('feedChip'),text('stateSmall'),text('vorRescueSmall'),text('chronosExpiry'),text('chronosNote')].join(' ').toUpperCase(); var p=0,n=[]; if(t.indexOf('STALE')>=0||t.indexOf('OFFLINE')>=0||t.indexOf('DEAD')>=0){p-=55;n.push('feed risk')} if(t.indexOf('DANGER')>=0){p-=25;n.push('danger warning')} if(t.indexOf('EXHAUST')>=0){p-=15;n.push('exhaustion')} if(t.indexOf('EXPIRED')>=0){p-=20;n.push('timing expired')} if(t.indexOf('OPPOS')>=0||t.indexOf('CONFLICT')>=0){p-=12;n.push('conflict')} if(t.indexOf('CHOP')>=0){p-=8;n.push('chop')} return{p:p,notes:n}}
+  function direction(){var m=text('commandWord').toUpperCase(); if(m.indexOf('LONG')>=0)return'LONG'; if(m.indexOf('SHORT')>=0)return'SHORT'; var d=text('directionVal').toUpperCase(); if(d.indexOf('LONG')>=0)return'LONG'; if(d.indexOf('SHORT')>=0)return'SHORT'; return'NO-DIRECTION'}
+
+  function render(){
+    var feed=(text('feedChip')+' '+text('feedStatus')).toUpperCase(), omen=text('commandWord')||text('stateVal')||'WAIT', dir=direction(), vor=text('vorStateVal')||text('vorChip')||'—', chronos=text('chronosLabel')||'WAIT', realism=text('realismChip')||text('realismLabel')||'—', state=text('stateVal')||'—';
+    var hg = horizonGuard(chronos);
+    var blocked=false, reasons=[], score=30;
+
+    if(feed.indexOf('OFFLINE')>=0||feed.indexOf('STALE')>=0||feed.indexOf('DEAD')>=0||feed.indexOf('BOOT')>=0){blocked=true;reasons.push('feed not clean')}
+    if(dir==='LONG'||dir==='SHORT'){score+=24;reasons.push('OMEN direction present')}else{score-=18;reasons.push('no clean OMEN direction')}
+    var ou=String(omen||'').toUpperCase();
+    if(ou.indexOf('NO COMMAND')>=0||ou.indexOf('DORMANT')>=0||ou.indexOf('WAIT')>=0){blocked=true;reasons.push('OMEN not command-ready')}
+    else if(ou.indexOf('WATCH')>=0){score-=12;reasons.push('watch-only posture')}
+    else if(ou.indexOf('LONG')>=0||ou.indexOf('SHORT')>=0){score+=12;reasons.push('command word aligned')}
+
+    var vs=vscore(vor); score+=vs; if(vs>10)reasons.push('VOR supportive'); else if(vs<0)reasons.push('VOR reducing confidence');
+    var cs=cscore(chronos); score+=cs; if(cs>=16)reasons.push('Chronos timing favorable'); else if(cs<0)reasons.push('Chronos timing weak/late');
+    var rs=rscore(realism); score+=rs; if(rs>=8)reasons.push('mission realism supportive'); else if(rs<0)reasons.push('mission realism weak');
+    if(document.body&&document.body.textContent&&document.body.textContent.indexOf('RAW PASSED')>=0){score+=4;reasons.push('RAW PASSED advisory seal')}
+    var wp=warningPenalty(); score+=wp.p; if(wp.notes.length)reasons.push(wp.notes.join(', '));
+
+    if(!hg.safe && (dir==='LONG'||dir==='SHORT')){
+      score -= 24;
+      reasons.push(hg.reason);
+      if(hg.validity==='UNKNOWN') blocked = false;
+    }
+    if(hg.validity==='EXPIRED'){
+      score -= 24;
+      reasons.push('horizon expired');
+    }
+
+    score=clamp(Math.round(score),0,99);
+    var g=grade(score,blocked);
+    if(blocked)score=Math.min(score,34);
+
+    var leftText = hg.left===null ? 'left ?' : Math.round(hg.left)+'m left';
+    var ageText = hg.age===null ? 'age ?' : 'age '+Math.round(hg.age)+'m';
+    var posture=blocked?'NO TRADE':(dir==='LONG'||dir==='SHORT'?dir:'WATCH');
+    var word=posture+' · '+g+' · '+score+'/100 CI · '+hg.horizon;
+
+    var w=$('oracle32Word'); if(w){w.textContent=word;w.className='oracle32Word '+cls(g)}
+    set('oracle32Meta','Horizon '+hg.horizon+' · '+ageText+' · '+leftText+' · proof '+hg.proof);
+    set('oracle32Reason',reasons.length?'Why: '+reasons.slice(0,6).join(' · '):'Waiting for stronger dashboard evidence.');
+    set('oracle32Grade',g); set('oracle32Score',score+'/100 CI'); set('oracle32Horizon',hg.horizon); set('oracle32Omen',posture); set('oracle32Vor',vor||'—'); set('oracle32Chronos',chronos||'—');
+    set('oracle32Guard','Age '+(hg.age===null?'UNKNOWN':Math.round(hg.age)+'m')+' · Left '+(hg.left===null?'UNKNOWN':Math.round(hg.left)+'m')+' · '+hg.validity);
+  }
+
+  setInterval(render,700);
+  setTimeout(render,500);
+})();
+</script>
+
+
+
+
+<!-- OMEN_PHASE33_2_ORACLE_FLOW_TIMELEFT_PATCH_START -->
+<style id="oracle33FlowTimeleftStyle">
+  .oracle33FlowBar{
+    margin-top:10px;
+    border:1px solid rgba(215,169,58,.34);
+    background:linear-gradient(135deg,rgba(215,169,58,.10),rgba(30,40,55,.72));
+    border-radius:14px;
+    padding:10px 12px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+    justify-content:space-between;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  .oracle33FlowTitle{
+    font-size:10px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:#d7a93a;
+    font-weight:900;
+    flex:1 0 100%;
+  }
+  .oracle33FlowMain{
+    font-size:13px;
+    line-height:1.35;
+    color:#eef3ff;
+    font-weight:800;
+    flex:1 1 auto;
+  }
+  .oracle33FlowSub{
+    font-size:10px;
+    line-height:1.3;
+    color:#9badc2;
+    flex:1 0 100%;
+  }
+  .oracle33FlowPill{
+    display:inline-block;
+    border:1px solid rgba(255,255,255,.16);
+    border-radius:999px;
+    padding:3px 7px;
+    margin:2px 2px 2px 0;
+    background:rgba(255,255,255,.05);
+    white-space:nowrap;
+  }
+  .oracle33FlowGood{color:#35c46a}
+  .oracle33FlowWarn{color:#d7a93a}
+  .oracle33FlowBad{color:#e05d5d}
+</style>
+<script id="oracle33FlowTimeleftPatch">
+(function(){
+  if(window.__OMEN_PHASE33_2_ORACLE_FLOW_TIMELEFT__) return;
+  window.__OMEN_PHASE33_2_ORACLE_FLOW_TIMELEFT__ = true;
+
+  var BASE_ALL = 5.95;
+  var BASE_USABLE = 3.80;
+  var usableGrades = { "S":1, "A":1, "A-":1, "B+":1 };
+
+  function q(id){ return document.getElementById(id); }
+  function txt(id){ var el=q(id); return el ? String(el.textContent||"").trim() : ""; }
+  function setText(id, value){ var el=q(id); if(el) el.textContent = value; }
+  function nowMYT(){
+    return new Date(new Date().toLocaleString("en-US", { timeZone:"Asia/Kuala_Lumpur" }));
+  }
+  function escapeHTML(s){
+    return String(s).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]);});
+  }
+
+  function findOracleCard(){
+    var ids = ["oracle32Tape","oracle32Score","oracle32Grade","oracle32Guard"];
+    for(var i=0;i<ids.length;i++){
+      var el=q(ids[i]);
+      if(!el) continue;
+      var p=el;
+      for(var j=0;j<8 && p;j++,p=p.parentElement){
+        var t=(p.textContent||"").toUpperCase();
+        if(t.indexOf("ORACLE")>=0) return p;
+      }
+    }
+    var all=document.querySelectorAll("section,article,div");
+    for(var k=0;k<all.length;k++){
+      var s=(all[k].textContent||"").toUpperCase();
+      if(s.indexOf("ORACLE CONVICTION")>=0 || s.indexOf("ORACLE")>=0 && s.indexOf("HORIZON GUARD")>=0) return all[k];
+    }
+    return document.body;
+  }
+
+  function ensureFlowRow(){
+    var existing=q("oracle33FlowBar");
+    if(existing) return existing;
+    var card=findOracleCard();
+    var row=document.createElement("div");
+    row.id="oracle33FlowBar";
+    row.className="oracle33FlowBar";
+    row.innerHTML =
+      '<div class="oracle33FlowTitle">ORACLE DAILY FLOW</div>' +
+      '<div class="oracle33FlowMain" id="oracle33FlowMain">FLOW: collecting session memory · baseline 5.95/day</div>' +
+      '<div class="oracle33FlowSub" id="oracle33FlowSub">Usable baseline 3.80/day · strict S+ remains a badge only</div>';
+    var guard=q("oracle32Guard");
+    if(guard){
+      var anchor=guard;
+      for(var i=0;i<4 && anchor && anchor.parentElement && !String(anchor.className||"").match(/card|panel|oracle/i);i++){
+        anchor=anchor.parentElement;
+      }
+      if(anchor && anchor.parentElement){
+        anchor.parentElement.insertBefore(row, anchor.nextSibling);
+        return row;
+      }
+    }
+    card.appendChild(row);
+    return row;
+  }
+
+  function readTape(){
+    return txt("oracle32Tape") || txt("oracleTape") || "";
+  }
+
+  function parseGrade(tape){
+    var t=(tape||"").toUpperCase();
+    var m=t.match(/(?:^|·|\s)(S|A-|A|B\+|B|C|D|X)(?:\s|·|$)/);
+    return m ? m[1] : "";
+  }
+
+  function parsePosture(tape){
+    var t=(tape||"").toUpperCase();
+    if(t.indexOf("LONG")>=0) return "LONG";
+    if(t.indexOf("SHORT")>=0) return "SHORT";
+    if(t.indexOf("NO TRADE")>=0) return "NO TRADE";
+    if(t.indexOf("WATCH")>=0) return "WATCH";
+    return "UNKNOWN";
+  }
+
+  function parseHorizon(tape){
+    var t=(tape||"").toUpperCase();
+    var m=t.match(/NOW\s*[–-]\s*(\d+)M/);
+    if(m) return { label:"NOW–"+m[1]+"m", end:parseInt(m[1],10), known:true };
+    m=t.match(/(\d+)\s*[–-]\s*(\d+)M/);
+    if(m) return { label:m[1]+"–"+m[2]+"m", end:parseInt(m[2],10), known:true };
+    m=t.match(/(\d+)\s*[–-]\s*(\d+)\s*M/);
+    if(m) return { label:m[1]+"–"+m[2]+"m", end:parseInt(m[2],10), known:true };
+    return { label:"UNKNOWN", end:null, known:false };
+  }
+
+  function readAgeFromGuard(){
+    var g=txt("oracle32Guard") || txt("oracleGuard") || "";
+    var m=g.match(/Age\s+(\d+)\s*m/i);
+    if(m) return parseInt(m[1],10);
+    var ids=["chronosAge","chronosSignalAge","signalAge","ageVal","commandAge","oracleAge"];
+    for(var i=0;i<ids.length;i++){
+      var s=txt(ids[i]);
+      var mm=s.match(/(\d+)\s*m/i);
+      if(mm) return parseInt(mm[1],10);
+    }
+    var body=(document.body.textContent||"");
+    var bm=body.match(/Signal\s+Age\s*[:·-]?\s*(\d+)\s*m/i);
+    if(bm) return parseInt(bm[1],10);
+    return null;
+  }
+
+  function miniLeftSuffix(){
+    var tape=readTape();
+    var h=parseHorizon(tape);
+    var age=readAgeFromGuard();
+    if(!h.known || h.end===null || age===null || isNaN(age)) return "";
+    var left=Math.max(0, h.end - age);
+    if(age > h.end) return " · L0m";
+    return " · L"+left+"m";
+  }
+
+  function patchMainTapeTimeLeft(){
+    var el=q("oracle32Tape") || q("oracleTape");
+    if(!el) return;
+    var t=String(el.textContent||"").trim();
+    if(!t) return;
+
+    // Remove old mini-left suffix before recalculating.
+    t=t.replace(/\s*·\s*L\??\d*m\b/ig,"").replace(/\s*·\s*L\?/ig,"");
+
+    var suffix=miniLeftSuffix();
+    if(suffix && /NOW\s*[–-]\s*\d+M|(?:\d+)\s*[–-]\s*(?:\d+)M/i.test(t)){
+      el.textContent=t+suffix;
+    }
+  }
+
+  function loadFlow(){
+    try{
+      var raw=localStorage.getItem("omen_oracle33_flow_session");
+      if(!raw) return { date:"", events:[], lastKey:"" };
+      return JSON.parse(raw);
+    }catch(e){ return { date:"", events:[], lastKey:"" }; }
+  }
+  function saveFlow(obj){
+    try{ localStorage.setItem("omen_oracle33_flow_session", JSON.stringify(obj)); }catch(e){}
+  }
+
+  function recordFlowEvent(){
+    var row=ensureFlowRow();
+    var d=nowMYT();
+    var day=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    var tape=readTape();
+    var grade=parseGrade(tape);
+    var posture=parsePosture(tape);
+    var horizon=parseHorizon(tape).label;
+    var ciText=txt("oracle32Score") || "";
+    var scoreMatch=(tape+" "+ciText).match(/(\d+)\s*(?:\/100\s*CI|%)/i);
+    var ci=scoreMatch ? parseInt(scoreMatch[1],10) : null;
+    var key=[posture,grade,horizon,ci].join("|");
+
+    var store=loadFlow();
+    if(store.date !== day){
+      store={ date:day, events:[], lastKey:"" };
+    }
+
+    // Only count meaningful changes, not every refresh.
+    if(tape && key !== store.lastKey && posture !== "UNKNOWN"){
+      store.events.push({ ts:d.toISOString(), posture:posture, grade:grade, horizon:horizon, ci:ci, key:key });
+      store.lastKey=key;
+      if(store.events.length>120) store.events=store.events.slice(-120);
+      saveFlow(store);
+    }
+
+    var all=store.events.length;
+    var usable=store.events.filter(function(e){ return usableGrades[e.grade]; }).length;
+    var hour=d.getHours()+d.getMinutes()/60;
+    var expectedAll=Math.max(0.5, BASE_ALL*(hour/24));
+    var expectedUsable=Math.max(0.3, BASE_USABLE*(hour/24));
+    var pace="normal", cls="oracle33FlowWarn";
+    if(all >= Math.ceil(expectedAll+1) || usable >= Math.ceil(expectedUsable+1)){ pace="ahead"; cls="oracle33FlowGood"; }
+    else if(all < Math.max(1, Math.floor(expectedAll*0.55)) && hour>4){ pace="slow"; cls="oracle33FlowBad"; }
+    if(all >= 7){ pace="overtrade caution"; cls="oracle33FlowWarn"; }
+
+    var remainingAll=Math.max(0, Math.round(BASE_ALL-all));
+    var remainingUsable=Math.max(0, Math.round(BASE_USABLE-usable));
+
+    setText("oracle33FlowMain",
+      "FLOW: "+all+"/6 signals today · "+usable+" usable · pace "+pace
+    );
+    var sub=q("oracle33FlowSub");
+    if(sub){
+      sub.innerHTML =
+        '<span class="oracle33FlowPill">Baseline 5.95/day</span>' +
+        '<span class="oracle33FlowPill">Usable 3.80/day</span>' +
+        '<span class="oracle33FlowPill">Remaining ~'+remainingAll+' signals / '+remainingUsable+' usable</span>' +
+        '<span class="oracle33FlowPill '+cls+'">Mission flow '+escapeHTML(pace)+'</span>';
+    }
+  }
+
+  function tick(){
+    try{
+      ensureFlowRow();
+      patchMainTapeTimeLeft();
+      recordFlowEvent();
+    }catch(e){}
+  }
+
+  if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded", tick);
+  }else{
+    tick();
+  }
+  setInterval(tick, 5000);
+})();
+</script>
+<!-- OMEN_PHASE33_2_ORACLE_FLOW_TIMELEFT_PATCH_END -->
+
+</body>
+</html>
