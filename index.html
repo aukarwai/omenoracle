@@ -2753,5 +2753,302 @@ html{-webkit-text-size-adjust:100%}body{background:radial-gradient(circle at 20%
 </script>
 <!-- OMEN_PHASE33_4_BROWSER_FRESHNESS_COMMAND_SEAL_END -->
 
+
+
+<!-- OMEN_J3_JESUS_WEATHER_COMPANION_CARD_START -->
+<style id="omenJ3JesusWeatherStyle">
+  .j3JesusCard{
+    margin-top:10px;
+    border:1px solid rgba(91,209,196,.32);
+    background:linear-gradient(135deg,rgba(91,209,196,.10),rgba(18,25,35,.88));
+    border-radius:15px;
+    padding:11px 12px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  .j3JesusTitle{
+    font-size:10px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:#5bd1c4;
+    font-weight:900;
+    margin-bottom:5px;
+  }
+  .j3JesusMain{
+    font-size:13px;
+    line-height:1.35;
+    color:#eef3ff;
+    font-weight:900;
+  }
+  .j3JesusSub{
+    margin-top:5px;
+    font-size:10px;
+    line-height:1.35;
+    color:#9badc2;
+  }
+  .j3JesusPill{
+    display:inline-block;
+    border:1px solid rgba(255,255,255,.16);
+    border-radius:999px;
+    padding:3px 7px;
+    margin:2px 2px 2px 0;
+    background:rgba(255,255,255,.05);
+    white-space:nowrap;
+  }
+  .j3Good{color:#35c46a;font-weight:900}
+  .j3Warn{color:#d7a93a;font-weight:900}
+  .j3Bad{color:#e05d5d;font-weight:900}
+  .j3Blue{color:#7bb7ff;font-weight:900}
+</style>
+<script id="omenJ3JesusWeatherCompanionCard">
+(function(){
+  if(window.__OMEN_J3_JESUS_WEATHER_COMPANION__) return;
+  window.__OMEN_J3_JESUS_WEATHER_COMPANION__ = true;
+
+  /*
+    J3 JESUS WEATHER COMPANION CARD
+    - companion/weather only
+    - does not write OMEN command
+    - does not write VOR/CHRONOS/ORACLE authority
+    - isolated candle/weather calculation
+  */
+
+  var CFG = {
+    windows:{short:20,base:240,dE_lag:5,ret_a:15,ret_b:60,dB_lag:60,recent_actual:30},
+    regime:{q1_bps:15.089426323024961,q2_bps:23.23981704341926},
+    state:{E_low:-0.31640513202558823,E_mid:0.1637651927427468,E_high:0.6939550147191993},
+    onset:{
+      features:["rng_b","rng_s","dB60","E","dE","vol_z","taker_dev","abs_taker","ret15","ret60","sin_tod","cos_tod"],
+      mean:[22.227974151516793,22.229371326920376,-0.0031376282470969574,-0.004888743249049056,-5.2994604414480875e-05,0.01540438654196908,-0.00045795933830177854,0.129243427525954,-0.1722667074437783,-0.70276092459947,-5.148838821466014e-05,-1.9180463391985695e-05],
+      std:[14.179030331496065,17.449016749721917,3.662433558304596,0.5154259518077864,0.1984633362108269,1.1015963423938733,0.1599829474816277,0.09429151421526893,75.74726002610922,144.89969863638868,0.7070913951081325,0.7071221647955115],
+      coef:[0.035424797569719176,-0.24969295669218067,-0.047963936924012185,0.5859946305960433,0.14166012767276207,0.23394244946494705,-0.011895244538600696,-0.061004958108236654,-0.026421866883203343,-0.007973932673369915,-0.09192652264864973,0.10616523658242019],
+      intercept:-1.7961269184722468,horizon_min:30
+    },
+    time_to_target:{
+      "100":{LOW:{reach:0.835,med:79},MED:{reach:0.959,med:45},HIGH:{reach:0.994,med:19}},
+      "150":{LOW:{reach:0.601,med:113},MED:{reach:0.815,med:76},HIGH:{reach:0.947,med:38}},
+      "200":{LOW:{reach:0.421,med:129},MED:{reach:0.653,med:98},HIGH:{reach:0.846,med:58}}
+    }
+  };
+
+  var SYM_B="1000PEPEUSDT", FAPI="https://fapi.binance.com/fapi/v1";
+  var EB=[], EBmap=new Map(), lastFetch=0, lastWeather=null, lastClosedAt=null, booting=false;
+
+  function q(id){ return document.getElementById(id); }
+  function txt(id){ var el=q(id); return el ? String(el.textContent||"").trim() : ""; }
+  function now(){ return Date.now(); }
+  function mk(t){ return Math.floor(t/60000)*60000; }
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])})}
+  function mean(a,i,w){var s=0;for(var k=i-w+1;k<=i;k++)s+=a[k];return s/w;}
+  function sd(a,i,w,m){var s=0;for(var k=i-w+1;k<=i;k++){var d=a[k]-m;s+=d*d;}return Math.sqrt(s/(w-1));}
+  function sigmoid(z){return 1/(1+Math.exp(-z));}
+
+  function findOracleCard(){
+    return q("oracle32") || (q("oracle32Word") && q("oracle32Word").closest("section,article,div")) || document.body;
+  }
+
+  function ensureCard(){
+    var existing=q("j3JesusCard");
+    if(existing) return existing;
+    var card=document.createElement("div");
+    card.id="j3JesusCard";
+    card.className="j3JesusCard";
+    card.innerHTML =
+      '<div class="j3JesusTitle">JESUS WEATHER COMPANION · NO COMMAND AUTHORITY</div>' +
+      '<div class="j3JesusMain" id="j3JesusMain">WEATHER: warming up · waiting for closed candles</div>' +
+      '<div class="j3JesusSub" id="j3JesusSub">Use as market fertility gauge only. OMEN remains command.</div>';
+    var anchor=q("oracle33FreshSeal") || q("oracle33FlowBar") || q("oracle32");
+    if(anchor && anchor.parentElement){
+      anchor.parentElement.insertBefore(card, anchor.nextSibling);
+    }else{
+      findOracleCard().appendChild(card);
+    }
+    return card;
+  }
+
+  function upsert(k){
+    var t=mk(+k[0]);
+    var b={t:t,o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5],n:+k[8],tb:+k[9]};
+    if(EBmap.has(t)){ Object.assign(EBmap.get(t),b); return false; }
+    EBmap.set(t,b); EB.push(b); EB.sort(function(a,b){return a.t-b.t;});
+    while(EB.length>1000){ var old=EB.shift(); EBmap.delete(old.t); }
+    return true;
+  }
+
+  function computeWeather(){
+    var n=EB.length, B=CFG.windows.base, S=CFG.windows.short;
+    if(n < B+CFG.windows.dB_lag+5) return null;
+    var C=EB.map(function(b){return b.c}),H=EB.map(function(b){return b.h}),L=EB.map(function(b){return b.l}),V=EB.map(function(b){return b.v}),TB=EB.map(function(b){return b.tb});
+    var tr=EB.map(function(b){return (b.h-b.l)/b.c*1e4;});
+    function rngB(i){return mean(tr,i,B);}
+    function rngS(i){return mean(tr,i,S);}
+    function Eat(i){var rb=rngB(i),rs=rngS(i),sdev=sd(tr,i,B,rb);return (rs-rb)/(sdev+1e-9);}
+    var i=n-1, rb=rngB(i), rs=rngS(i), E=Eat(i), dE=E-Eat(i-5), dB60=rb-rngB(i-CFG.windows.dB_lag);
+    var vM=mean(V,i,B), vS=sd(V,i,B,vM), vol_z=(V[i]-vM)/(vS+1e-9);
+    var taker_dev=(V[i]>0?TB[i]/V[i]:0.5)-0.5, abs_taker=Math.abs(taker_dev);
+    var ret15=Math.log(C[i]/C[i-CFG.windows.ret_a])*1e4, ret60=Math.log(C[i]/C[i-CFG.windows.ret_b])*1e4;
+    var dt=new Date(EB[i].t), mh=((dt.getUTCHours()+8)%24)+dt.getUTCMinutes()/60;
+    var sin_tod=Math.sin(2*Math.PI*mh/24), cos_tod=Math.cos(2*Math.PI*mh/24);
+    var regime=rb<=CFG.regime.q1_bps?"LOW":(rb<=CFG.regime.q2_bps?"MED":"HIGH");
+    var Ehi=CFG.state.E_high,Emid=CFG.state.E_mid,Elo=CFG.state.E_low;
+    var actualNow=E>=Ehi, recentActual=false;
+    for(var k=Math.max(0,i-29);k<=i;k++){ if(Eat(k)>=Ehi){recentActual=true;break;} }
+    var state="Neutral";
+    if(E<=Elo) state="Pre-formation";
+    if(!actualNow && recentActual && dE<0) state="Residual";
+    if(E>=Emid && E<Ehi && dE>0) state="Formation";
+    if(actualNow) state="Actual";
+    var feat={rng_b:rb,rng_s:rs,dB60:dB60,E:E,dE:dE,vol_z:vol_z,taker_dev:taker_dev,abs_taker:abs_taker,ret15:ret15,ret60:ret60,sin_tod:sin_tod,cos_tod:cos_tod};
+    var z=CFG.onset.intercept;
+    CFG.onset.features.forEach(function(f,idx){ z += CFG.onset.coef[idx]*((feat[f]-CFG.onset.mean[idx])/CFG.onset.std[idx]); });
+    var onset_p=sigmoid(z);
+    var hh=-Infinity,ll=Infinity;
+    for(var kk=i-30;kk<i;kk++){ if(H[kk]>hh)hh=H[kk]; if(L[kk]<ll)ll=L[kk]; }
+    var brkDir=C[i]>hh?1:(C[i]<ll?-1:0);
+    return {regime:regime,state:state,E:E,dE:dE,onset_p:onset_p,brkDir:brkDir,close:C[i],barT:EB[i].t,rb:rb,rs:rs};
+  }
+
+  function weatherClass(w){
+    if(!w) return {label:"WARMING", cls:"j3Warn", note:"waiting for enough closed bars"};
+    if(w.regime==="LOW") return {label:"DEAD / QUIET", cls:"j3Bad", note:"dead tape; reduce urgency"};
+    if(w.state==="Formation" || w.state==="Actual"){
+      return {label:"FERTILE", cls:"j3Good", note:"movement field is active; use only as support"};
+    }
+    if(w.state==="Residual") return {label:"RESIDUAL", cls:"j3Warn", note:"after-move decay; beware late chase"};
+    return {label:"WATCH", cls:"j3Blue", note:"field is not dead, but not fully fertile"};
+  }
+
+  function commandDirection(){
+    var s=(txt("commandWord")+" "+txt("oracle32Word")).toUpperCase();
+    if(s.indexOf("LONG")>=0) return "LONG";
+    if(s.indexOf("SHORT")>=0) return "SHORT";
+    return "";
+  }
+
+  function interpret(w){
+    var cmd=commandDirection();
+    if(!w) return "Waiting for enough closed candles. No weather verdict yet.";
+    var wc=weatherClass(w);
+    var dirSupport="direction-neutral";
+    if(w.brkDir>0) dirSupport="up-break support";
+    if(w.brkDir<0) dirSupport="down-break support";
+    var conflict="";
+    if(cmd==="LONG" && w.brkDir<0) conflict=" · weather opposes OMEN LONG";
+    if(cmd==="SHORT" && w.brkDir>0) conflict=" · weather opposes OMEN SHORT";
+    if((cmd==="LONG" && w.brkDir>0) || (cmd==="SHORT" && w.brkDir<0)) conflict=" · weather supports OMEN "+cmd;
+    if(w.regime==="LOW") return "LOW regime: dead/quiet tape. JESUS should reduce urgency, not create entry.";
+    if(w.state==="Residual") return "Residual weather: after-move decay. Beware chasing a late OMEN signal"+conflict+".";
+    if(w.state==="Formation" || w.state==="Actual") return "Fertile field: movement is active/forming. Use as support only"+conflict+".";
+    return "Weather watch: not dead, but not cleanly fertile yet · "+dirSupport+".";
+  }
+
+  function render(){
+    ensureCard();
+    var w=lastWeather;
+    var wc=weatherClass(w);
+    var main=q("j3JesusMain"), sub=q("j3JesusSub");
+    if(main){
+      var onset=w ? Math.round(w.onset_p*100)+"%" : "—";
+      var brk=w ? (w.brkDir>0?"UP-BREAK":w.brkDir<0?"DOWN-BREAK":"NO BREAK") : "—";
+      main.innerHTML =
+        'WEATHER: <span class="'+wc.cls+'">'+esc(wc.label)+'</span>' +
+        (w ? ' · '+esc(w.regime)+' · '+esc(w.state)+' · onset '+esc(onset)+' · '+esc(brk) : '');
+    }
+    if(sub){
+      var age=lastClosedAt ? Math.max(0,Math.floor((Date.now()-lastClosedAt)/60000))+"m" : "unknown";
+      sub.innerHTML =
+        '<span class="j3JesusPill">Companion only</span>' +
+        '<span class="j3JesusPill">No command authority</span>' +
+        '<span class="j3JesusPill">Closed-bar age '+esc(age)+'</span>' +
+        '<span class="j3JesusPill">'+esc(wc.note)+'</span><br>' +
+        esc(interpret(w));
+    }
+  }
+
+  async function fetchClosed(limit){
+    try{
+      booting=true;
+      var r=await fetch(FAPI+"/klines?symbol="+SYM_B+"&interval=1m&limit="+(limit||1000),{cache:"no-store"});
+      var d=await r.json();
+      if(!Array.isArray(d)) throw new Error("bad kline response");
+      var cut=mk(Date.now()), add=false;
+      for(var i=0;i<d.length;i++){
+        if(mk(+d[i][0])<cut){ if(upsert(d[i])) add=true; }
+      }
+      if(EB.length) lastClosedAt=EB[EB.length-1].t;
+      lastWeather=computeWeather();
+      render();
+    }catch(e){
+      ensureCard();
+      var m=q("j3JesusMain"), s=q("j3JesusSub");
+      if(m)m.innerHTML='WEATHER: <span class="j3Warn">CANDLE FETCH BLOCKED</span>';
+      if(s)s.textContent='JESUS companion could not fetch closed Binance bars in this browser. OMEN remains unchanged.';
+    }finally{
+      booting=false;
+    }
+  }
+
+  function tick(){
+    ensureCard();
+    if(!booting && Date.now()-lastFetch>55000){
+      lastFetch=Date.now();
+      fetchClosed(1000);
+    }else{
+      render();
+    }
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",tick);
+  else tick();
+
+  setInterval(tick,5000);
+  document.addEventListener("visibilitychange",function(){ if(!document.hidden){ lastFetch=0; tick(); } });
+  window.addEventListener("focus",function(){ lastFetch=0; tick(); });
+})();
+</script>
+<!-- OMEN_J3_JESUS_WEATHER_COMPANION_CARD_END -->
+
+
+
+<!-- OMEN_J3_1_JESUS_WEATHER_FRESHNESS_LAYOUT_SWAP_START -->
+<script id="omenJ31JesusWeatherFreshnessLayoutSwap">
+(function(){
+  if(window.__OMEN_J3_1_JESUS_WEATHER_FRESHNESS_SWAP__) return;
+  window.__OMEN_J3_1_JESUS_WEATHER_FRESHNESS_SWAP__ = true;
+
+  function q(id){ return document.getElementById(id); }
+
+  function swapCards(){
+    try{
+      var jesus = q("j3JesusCard");
+      var fresh = q("oracle33FreshSeal");
+
+      if(!jesus || !fresh || !fresh.parentElement) return;
+
+      // Desired order:
+      // ORACLE / Daily Flow
+      // JESUS Weather Companion
+      // Browser Freshness / Command Seal
+      if(fresh.previousElementSibling !== jesus){
+        fresh.parentElement.insertBefore(jesus, fresh);
+      }
+
+      var title = jesus.querySelector(".j3JesusTitle");
+      if(title && title.textContent.indexOf("ABOVE FRESHNESS") < 0){
+        title.textContent = "JESUS WEATHER COMPANION · ABOVE FRESHNESS · NO COMMAND AUTHORITY";
+      }
+    }catch(e){}
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", swapCards);
+  }else{
+    swapCards();
+  }
+
+  setInterval(swapCards, 800);
+})();
+</script>
+<!-- OMEN_J3_1_JESUS_WEATHER_FRESHNESS_LAYOUT_SWAP_END -->
+
 </body>
 </html>
