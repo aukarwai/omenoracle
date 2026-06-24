@@ -2410,43 +2410,122 @@ html{-webkit-text-size-adjust:100%}body{background:radial-gradient(circle at 20%
 
 
 
-<!-- OMEN_PHASE33_2_ORACLE_FLOW_TIMELEFT_PATCH_START -->
-<style id="oracle33FlowTimeleftStyle">
-  .oracle33FlowBar{
+
+
+
+
+<!-- OMEN_PHASE33_3_ORACLE_STATE_MISMATCH_TIMELEFT_REPAIR_START -->
+<style id="oracle33StateMismatchTimeleftStyle">
+.oracle33FlowBar{margin-top:10px;border:1px solid rgba(215,169,58,.34);background:linear-gradient(135deg,rgba(215,169,58,.10),rgba(30,40,55,.72));border-radius:14px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.oracle33FlowTitle{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#d7a93a;font-weight:900;flex:1 0 100%}
+.oracle33FlowMain{font-size:13px;line-height:1.35;color:#eef3ff;font-weight:800;flex:1 1 auto}
+.oracle33FlowSub{font-size:10px;line-height:1.3;color:#9badc2;flex:1 0 100%}
+.oracle33FlowPill{display:inline-block;border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:3px 7px;margin:2px 2px 2px 0;background:rgba(255,255,255,.05);white-space:nowrap}
+.oracle33FlowGood{color:#35c46a}.oracle33FlowWarn{color:#d7a93a}.oracle33FlowBad{color:#e05d5d}
+.oracle33StateLine{margin-top:6px;border-radius:10px;padding:7px 9px;font-size:10px;line-height:1.35;font-weight:900;letter-spacing:.04em;font-family:var(--mono,ui-monospace,Menlo,Consolas,monospace);display:none}
+.oracle33StateLine.warn{display:block;color:#d7a93a;background:rgba(215,169,58,.10);border:1px solid rgba(215,169,58,.30)}
+.oracle33StateLine.bad{display:block;color:#e05d5d;background:rgba(224,93,93,.10);border:1px solid rgba(224,93,93,.35)}
+</style>
+<script id="oracle33StateMismatchTimeleftRepair">
+(function(){
+ if(window.__OMEN_PHASE33_3_ORACLE_STATE_MISMATCH_TIMELEFT__)return;
+ window.__OMEN_PHASE33_3_ORACLE_STATE_MISMATCH_TIMELEFT__=true;
+ var BASE_ALL=5.95,BASE_USABLE=3.80,usableGrades={"S":1,"A":1,"A-":1,"B+":1};
+ function q(id){return document.getElementById(id)}
+ function txt(id){var e=q(id);return e?String(e.textContent||"").trim():""}
+ function setText(id,v){var e=q(id);if(e)e.textContent=v}
+ function nowMYT(){return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Kuala_Lumpur"}))}
+ function esc(s){return String(s).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])})}
+ function gradeFromScore(s){if(s>=88)return"S";if(s>=78)return"A";if(s>=70)return"A-";if(s>=62)return"B+";if(s>=55)return"B";if(s>=45)return"C";if(s>=35)return"D";return"X"}
+ function cls(g){if(g==="S")return"oracle32GradeS";if(g==="A"||g==="A-")return"oracle32GradeA";if(g==="B+"||g==="B")return"oracle32GradeB";if(g==="C+"||g==="C")return"oracle32GradeC";if(g==="D")return"oracle32GradeD";return"oracle32GradeX"}
+ function card(){return q("oracle32")||document.body}
+ function wordEl(){return q("oracle32Word")||q("oracle32Tape")||q("oracleTape")}
+ function readTape(){var e=wordEl();return e?String(e.textContent||"").trim():""}
+ function ensureStateLine(){var x=q("oracle33StateLine");if(x)return x;var meta=q("oracle32Meta"),line=document.createElement("div");line.id="oracle33StateLine";line.className="oracle33StateLine";if(meta&&meta.parentElement)meta.parentElement.insertBefore(line,meta.nextSibling);else card().appendChild(line);return line}
+ function ensureFlow(){var x=q("oracle33FlowBar");if(x)return x;var row=document.createElement("div");row.id="oracle33FlowBar";row.className="oracle33FlowBar";row.innerHTML='<div class="oracle33FlowTitle">ORACLE DAILY FLOW</div><div class="oracle33FlowMain" id="oracle33FlowMain">FLOW: collecting session memory · baseline 5.95/day</div><div class="oracle33FlowSub" id="oracle33FlowSub">Usable baseline 3.80/day · strict S+ remains a badge only</div>';card().appendChild(row);return row}
+ function cmdDir(){var s=txt("commandWord").toUpperCase();if(s.indexOf("LONG")>=0)return"LONG";if(s.indexOf("SHORT")>=0)return"SHORT";return""}
+ function stDir(){var s=(txt("directionVal")+" "+txt("directionSmall")).toUpperCase();if(s.indexOf("LONG")>=0)return"LONG";if(s.indexOf("SHORT")>=0)return"SHORT";return""}
+ function stateStatus(){var cmd=cmdDir(),sd=stDir(),st=txt("stateVal").toUpperCase();if(cmd&&sd&&cmd!==sd)return{level:"bad",label:"STATE MISMATCH",note:"OMEN "+cmd+" vs STATE "+sd};if(cmd&&(!sd||st.indexOf("RESIDUAL")>=0||st.indexOf("WAIT")>=0||st==="—"||st===""))return{level:"warn",label:"STATE NOT CONFIRMED",note:"OMEN "+cmd+" while state is "+(st||"UNPROVEN")};return{level:"ok",label:"STATE MATCH",note:cmd&&sd?"OMEN "+cmd+" / STATE "+sd:"state neutral"}}
+ function stripOverlay(t){return String(t||"").replace(/\s*·\s*L\d+m\b/ig,"").replace(/\s*·\s*STATE MISMATCH\b/ig,"").replace(/\s*·\s*STATE NOT CONFIRMED\b/ig,"").trim()}
+ function parseHorizon(t){var u=stripOverlay(t).toUpperCase(),m=u.match(/NOW\s*[–-]\s*(\d+)\s*M/);if(m)return{label:"NOW–"+m[1]+"m",end:parseInt(m[1],10),known:true};m=u.match(/(\d+)\s*[–-]\s*(\d+)\s*M/);if(m)return{label:m[1]+"–"+m[2]+"m",end:parseInt(m[2],10),known:true};return{label:"UNKNOWN",end:null,known:false}}
+ function readAge(){var g=txt("oracle32Guard"),m=g.match(/Age\s+(\d+)\s*m/i);if(m)return parseInt(m[1],10);var meta=txt("oracle32Meta");m=meta.match(/age\s+(\d+)\s*m/i);if(m)return parseInt(m[1],10);["chronosAge","chronosSignalAge","signalAge","ageVal","commandAge","oracleAge"].some(function(id){var s=txt(id),mm=s.match(/(\d+)\s*m/i);if(mm){m=mm;return true}return false});if(m)return parseInt(m[1],10);var all=(document.body.textContent||"");m=all.match(/Signal\s+Age\s*[:·-]?\s*(\d+)\s*m/i);if(m)return parseInt(m[1],10);return null}
+ function miniLeft(base){var h=parseHorizon(base),a=readAge();if(!h.known||h.end===null||a===null||isNaN(a))return null;return Math.max(0,h.end-a)}
+ function patchWord(){
+   var e=wordEl();if(!e)return;var raw=String(e.textContent||"").trim();if(!raw)return;
+   var st=stateStatus(),had=/STATE MISMATCH|STATE NOT CONFIRMED/i.test(raw),base=stripOverlay(raw);
+   var m=base.match(/^(LONG|SHORT|WATCH|NO TRADE|ORACLE WAIT)\s*·\s*([A-Z+\-]+)\s*·\s*(\d+)\s*\/100\s*CI\s*·\s*(.+)$/i);
+   if(m&&(st.level==="bad"||st.level==="warn")&&!had){
+     var penalty=st.level==="bad"?16:8,score=Math.max(0,parseInt(m[3],10)-penalty),g=gradeFromScore(score);
+     base=m[1].toUpperCase()+" · "+g+" · "+score+"/100 CI · "+m[4].trim();
+     setText("oracle32Grade",g);setText("oracle32Score",score+"/100 CI");e.className="oracle32Word "+cls(g);
+   }
+   var suffix="",left=miniLeft(base),age=readAge();
+   if(left!==null&&/NOW\s*[–-]\s*\d+M|(?:\d+)\s*[–-]\s*(?:\d+)M/i.test(base)){
+     suffix+=" · L"+left+"m";var h=parseHorizon(base);
+     if(age!==null){setText("oracle32Guard","Age "+age+"m · Left "+left+"m · "+(left>0?"VALID":"EXPIRED"));setText("oracle32Meta","Horizon "+h.label+" · age "+age+"m · left "+left+"m · proof COMMAND_AGE")}
+   }
+   if(st.level==="bad")suffix+=" · STATE MISMATCH";else if(st.level==="warn")suffix+=" · STATE NOT CONFIRMED";
+   e.textContent=base+suffix;
+   var line=ensureStateLine();
+   if(st.level==="bad"){line.className="oracle33StateLine bad";line.textContent="COMMAND / STATE MISMATCH — "+st.note+". Treat as high caution / wait for confirmation."}
+   else if(st.level==="warn"){line.className="oracle33StateLine warn";line.textContent="COMMAND / STATE NOT CONFIRMED — "+st.note+". Treat as early/watch-ready, not clean execution."}
+   else{line.className="oracle33StateLine";line.textContent=""}
+   var r=q("oracle32Reason");if(r&&(st.level==="bad"||st.level==="warn")){var rt=String(r.textContent||""),tag=st.level==="bad"?"command/state mismatch":"state not confirmed";if(rt.toLowerCase().indexOf(tag)<0)r.textContent=rt?rt+" · "+tag:"Why: "+tag}
+ }
+ function pGrade(t){var m=(t||"").toUpperCase().match(/(?:^|·|\s)(S|A-|A|B\+|B|C|D|X)(?:\s|·|$)/);return m?m[1]:""}
+ function pPosture(t){t=(t||"").toUpperCase();if(t.indexOf("LONG")>=0)return"LONG";if(t.indexOf("SHORT")>=0)return"SHORT";if(t.indexOf("NO TRADE")>=0)return"NO TRADE";if(t.indexOf("WATCH")>=0)return"WATCH";return"UNKNOWN"}
+ function loadFlow(){try{var raw=localStorage.getItem("omen_oracle33_flow_session");return raw?JSON.parse(raw):{date:"",events:[],lastKey:""}}catch(e){return{date:"",events:[],lastKey:""}}}
+ function saveFlow(o){try{localStorage.setItem("omen_oracle33_flow_session",JSON.stringify(o))}catch(e){}}
+ function recordFlow(){
+   ensureFlow();var d=nowMYT(),day=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"),t=readTape(),grade=pGrade(t),posture=pPosture(t),h=parseHorizon(t).label,sm=stateStatus().label,ci=(t.match(/(\d+)\s*\/100\s*CI/i)||[])[1]||null,key=[posture,grade,h,ci,sm].join("|");
+   var store=loadFlow();if(store.date!==day)store={date:day,events:[],lastKey:""};
+   if(t&&key!==store.lastKey&&posture!=="UNKNOWN"){store.events.push({ts:d.toISOString(),posture:posture,grade:grade,horizon:h,ci:ci,key:key});store.lastKey=key;if(store.events.length>120)store.events=store.events.slice(-120);saveFlow(store)}
+   var all=store.events.length,usable=store.events.filter(function(e){return usableGrades[e.grade]}).length,hour=d.getHours()+d.getMinutes()/60,expectedAll=Math.max(.5,BASE_ALL*(hour/24)),expectedUsable=Math.max(.3,BASE_USABLE*(hour/24)),pace="normal",cls="oracle33FlowWarn";
+   if(all>=Math.ceil(expectedAll+1)||usable>=Math.ceil(expectedUsable+1)){pace="ahead";cls="oracle33FlowGood"}else if(all<Math.max(1,Math.floor(expectedAll*.55))&&hour>4){pace="slow";cls="oracle33FlowBad"}if(all>=7){pace="overtrade caution";cls="oracle33FlowWarn"}
+   setText("oracle33FlowMain","FLOW: "+all+"/6 signals today · "+usable+" usable · pace "+pace);
+   var sub=q("oracle33FlowSub");if(sub)sub.innerHTML='<span class="oracle33FlowPill">Baseline 5.95/day</span><span class="oracle33FlowPill">Usable 3.80/day</span><span class="oracle33FlowPill">Remaining ~'+Math.max(0,Math.round(BASE_ALL-all))+' signals / '+Math.max(0,Math.round(BASE_USABLE-usable))+' usable</span><span class="oracle33FlowPill '+cls+'">Mission flow '+esc(pace)+'</span>';
+ }
+ function tick(){try{ensureStateLine();ensureFlow();patchWord();recordFlow()}catch(e){}}
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",tick);else tick();
+ setInterval(tick,300);
+ try{var target=wordEl();if(target&&window.MutationObserver){new MutationObserver(function(){setTimeout(tick,20)}).observe(target,{childList:true,characterData:true,subtree:true})}}catch(e){}
+})();
+</script>
+<!-- OMEN_PHASE33_3_ORACLE_STATE_MISMATCH_TIMELEFT_REPAIR_END -->
+
+
+
+<!-- OMEN_PHASE33_4_BROWSER_FRESHNESS_COMMAND_SEAL_START -->
+<style id="oracle33BrowserFreshnessStyle">
+  .oracle33FreshSeal{
     margin-top:10px;
-    border:1px solid rgba(215,169,58,.34);
-    background:linear-gradient(135deg,rgba(215,169,58,.10),rgba(30,40,55,.72));
+    border:1px solid rgba(123,183,255,.28);
+    background:linear-gradient(135deg,rgba(123,183,255,.10),rgba(18,25,35,.84));
     border-radius:14px;
     padding:10px 12px;
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    align-items:center;
-    justify-content:space-between;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   }
-  .oracle33FlowTitle{
+  .oracle33FreshTitle{
     font-size:10px;
     letter-spacing:.16em;
     text-transform:uppercase;
-    color:#d7a93a;
+    color:#7bb7ff;
     font-weight:900;
-    flex:1 0 100%;
+    margin-bottom:5px;
   }
-  .oracle33FlowMain{
+  .oracle33FreshMain{
     font-size:13px;
     line-height:1.35;
+    font-weight:900;
     color:#eef3ff;
-    font-weight:800;
-    flex:1 1 auto;
   }
-  .oracle33FlowSub{
+  .oracle33FreshSub{
+    margin-top:5px;
     font-size:10px;
-    line-height:1.3;
+    line-height:1.35;
     color:#9badc2;
-    flex:1 0 100%;
   }
-  .oracle33FlowPill{
+  .oracle33FreshPill{
     display:inline-block;
     border:1px solid rgba(255,255,255,.16);
     border-radius:999px;
@@ -2455,225 +2534,224 @@ html{-webkit-text-size-adjust:100%}body{background:radial-gradient(circle at 20%
     background:rgba(255,255,255,.05);
     white-space:nowrap;
   }
-  .oracle33FlowGood{color:#35c46a}
-  .oracle33FlowWarn{color:#d7a93a}
-  .oracle33FlowBad{color:#e05d5d}
+  .oracle33FreshGood{color:#35c46a;font-weight:900}
+  .oracle33FreshWarn{color:#d7a93a;font-weight:900}
+  .oracle33FreshBad{color:#e05d5d;font-weight:900}
 </style>
-<script id="oracle33FlowTimeleftPatch">
+<script id="oracle33BrowserFreshnessCommandSeal">
 (function(){
-  if(window.__OMEN_PHASE33_2_ORACLE_FLOW_TIMELEFT__) return;
-  window.__OMEN_PHASE33_2_ORACLE_FLOW_TIMELEFT__ = true;
+  if(window.__OMEN_PHASE33_4_BROWSER_FRESHNESS_COMMAND_SEAL__) return;
+  window.__OMEN_PHASE33_4_BROWSER_FRESHNESS_COMMAND_SEAL__ = true;
 
-  var BASE_ALL = 5.95;
-  var BASE_USABLE = 3.80;
-  var usableGrades = { "S":1, "A":1, "A-":1, "B+":1 };
+  var STARTED_AT = Date.now();
+  var sessionId = (function(){
+    try{
+      var k="omen_phase33_4_browser_session_id";
+      var v=sessionStorage.getItem(k);
+      if(!v){
+        v="TAB-"+Math.random().toString(36).slice(2,6).toUpperCase()+"-"+Date.now().toString(36).slice(-4).toUpperCase();
+        sessionStorage.setItem(k,v);
+      }
+      return v;
+    }catch(e){
+      return "TAB-"+Math.random().toString(36).slice(2,6).toUpperCase();
+    }
+  })();
+
+  var lastTickAt = null;
+  var lastPriceText = "";
+  var lastCommand = "";
+  var lastCommandAt = null;
+  var lastOracleWord = "";
+  var lastOracleAt = null;
 
   function q(id){ return document.getElementById(id); }
   function txt(id){ var el=q(id); return el ? String(el.textContent||"").trim() : ""; }
-  function setText(id, value){ var el=q(id); if(el) el.textContent = value; }
-  function nowMYT(){
-    return new Date(new Date().toLocaleString("en-US", { timeZone:"Asia/Kuala_Lumpur" }));
+  function now(){ return Date.now(); }
+  function sec(ms){ return Math.max(0, Math.floor(ms/1000)); }
+  function min(ms){ return Math.max(0, Math.floor(ms/60000)); }
+  function fmtAge(ms){
+    if(ms===null || isNaN(ms)) return "unknown";
+    var s=sec(ms);
+    if(s<60) return s+"s";
+    var m=Math.floor(s/60);
+    if(m<60) return m+"m";
+    return Math.floor(m/60)+"h "+(m%60)+"m";
   }
-  function escapeHTML(s){
-    return String(s).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]);});
-  }
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])})}
 
   function findOracleCard(){
-    var ids = ["oracle32Tape","oracle32Score","oracle32Grade","oracle32Guard"];
-    for(var i=0;i<ids.length;i++){
-      var el=q(ids[i]);
-      if(!el) continue;
-      var p=el;
-      for(var j=0;j<8 && p;j++,p=p.parentElement){
-        var t=(p.textContent||"").toUpperCase();
-        if(t.indexOf("ORACLE")>=0) return p;
-      }
-    }
-    var all=document.querySelectorAll("section,article,div");
-    for(var k=0;k<all.length;k++){
-      var s=(all[k].textContent||"").toUpperCase();
-      if(s.indexOf("ORACLE CONVICTION")>=0 || s.indexOf("ORACLE")>=0 && s.indexOf("HORIZON GUARD")>=0) return all[k];
-    }
-    return document.body;
+    return q("oracle32") || (q("oracle32Word") && q("oracle32Word").closest("section,article,div")) || document.body;
   }
 
-  function ensureFlowRow(){
-    var existing=q("oracle33FlowBar");
+  function ensureSeal(){
+    var existing=q("oracle33FreshSeal");
     if(existing) return existing;
+    var seal=document.createElement("div");
+    seal.id="oracle33FreshSeal";
+    seal.className="oracle33FreshSeal";
+    seal.innerHTML =
+      '<div class="oracle33FreshTitle">BROWSER FRESHNESS / COMMAND SEAL</div>' +
+      '<div class="oracle33FreshMain" id="oracle33FreshMain">checking tab freshness…</div>' +
+      '<div class="oracle33FreshSub" id="oracle33FreshSub"></div>';
     var card=findOracleCard();
-    var row=document.createElement("div");
-    row.id="oracle33FlowBar";
-    row.className="oracle33FlowBar";
-    row.innerHTML =
-      '<div class="oracle33FlowTitle">ORACLE DAILY FLOW</div>' +
-      '<div class="oracle33FlowMain" id="oracle33FlowMain">FLOW: collecting session memory · baseline 5.95/day</div>' +
-      '<div class="oracle33FlowSub" id="oracle33FlowSub">Usable baseline 3.80/day · strict S+ remains a badge only</div>';
-    var guard=q("oracle32Guard");
-    if(guard){
-      var anchor=guard;
-      for(var i=0;i<4 && anchor && anchor.parentElement && !String(anchor.className||"").match(/card|panel|oracle/i);i++){
-        anchor=anchor.parentElement;
-      }
-      if(anchor && anchor.parentElement){
-        anchor.parentElement.insertBefore(row, anchor.nextSibling);
-        return row;
-      }
+    var flow=q("oracle33FlowBar");
+    if(flow && flow.parentElement){
+      flow.parentElement.insertBefore(seal, flow.nextSibling);
+    }else{
+      card.appendChild(seal);
     }
-    card.appendChild(row);
-    return row;
+    return seal;
   }
 
-  function readTape(){
-    return txt("oracle32Tape") || txt("oracleTape") || "";
-  }
-
-  function parseGrade(tape){
-    var t=(tape||"").toUpperCase();
-    var m=t.match(/(?:^|·|\s)(S|A-|A|B\+|B|C|D|X)(?:\s|·|$)/);
-    return m ? m[1] : "";
-  }
-
-  function parsePosture(tape){
-    var t=(tape||"").toUpperCase();
-    if(t.indexOf("LONG")>=0) return "LONG";
-    if(t.indexOf("SHORT")>=0) return "SHORT";
-    if(t.indexOf("NO TRADE")>=0) return "NO TRADE";
-    if(t.indexOf("WATCH")>=0) return "WATCH";
-    return "UNKNOWN";
-  }
-
-  function parseHorizon(tape){
-    var t=(tape||"").toUpperCase();
-    var m=t.match(/NOW\s*[–-]\s*(\d+)M/);
-    if(m) return { label:"NOW–"+m[1]+"m", end:parseInt(m[1],10), known:true };
-    m=t.match(/(\d+)\s*[–-]\s*(\d+)M/);
-    if(m) return { label:m[1]+"–"+m[2]+"m", end:parseInt(m[2],10), known:true };
-    m=t.match(/(\d+)\s*[–-]\s*(\d+)\s*M/);
-    if(m) return { label:m[1]+"–"+m[2]+"m", end:parseInt(m[2],10), known:true };
-    return { label:"UNKNOWN", end:null, known:false };
-  }
-
-  function readAgeFromGuard(){
-    var g=txt("oracle32Guard") || txt("oracleGuard") || "";
-    var m=g.match(/Age\s+(\d+)\s*m/i);
-    if(m) return parseInt(m[1],10);
-    var ids=["chronosAge","chronosSignalAge","signalAge","ageVal","commandAge","oracleAge"];
+  function priceText(){
+    var ids=[
+      "livePrice","price","priceVal","lastPrice","tickerPrice","stripPrice","topPrice",
+      "marketPrice","oraclePrice","feedPrice","lastTickPrice","priceText"
+    ];
     for(var i=0;i<ids.length;i++){
       var s=txt(ids[i]);
-      var mm=s.match(/(\d+)\s*m/i);
-      if(mm) return parseInt(mm[1],10);
+      if(s && /[0-9]/.test(s)) return s;
     }
-    var body=(document.body.textContent||"");
-    var bm=body.match(/Signal\s+Age\s*[:·-]?\s*(\d+)\s*m/i);
-    if(bm) return parseInt(bm[1],10);
-    return null;
+    var nodes=document.querySelectorAll("[id*='price' i],[class*='price' i],[id*='ticker' i],[class*='ticker' i]");
+    for(var j=0;j<nodes.length;j++){
+      var t=String(nodes[j].textContent||"").trim();
+      if(t && t.length<60 && /[0-9]/.test(t)) return t;
+    }
+    return "";
   }
 
-  function miniLeftSuffix(){
-    var tape=readTape();
-    var h=parseHorizon(tape);
-    var age=readAgeFromGuard();
-    if(!h.known || h.end===null || age===null || isNaN(age)) return "";
-    var left=Math.max(0, h.end - age);
-    if(age > h.end) return " · L0m";
-    return " · L"+left+"m";
+  function feedText(){
+    var ids=["feedStatus","feedChip","streamStatus","wsStatus","statusFeed","oracleFeed","connectionStatus","liveStatus"];
+    var out=[];
+    for(var i=0;i<ids.length;i++){
+      var s=txt(ids[i]);
+      if(s) out.push(s);
+    }
+    return out.join(" · ");
   }
 
-  function patchMainTapeTimeLeft(){
-    var el=q("oracle32Tape") || q("oracleTape");
-    if(!el) return;
-    var t=String(el.textContent||"").trim();
-    if(!t) return;
+  function commandText(){
+    var s=txt("commandWord") || txt("omenCommand") || txt("commandVal") || txt("mainCommand");
+    if(s) return s;
+    var nodes=document.querySelectorAll("[id*='command' i],[class*='command' i]");
+    for(var i=0;i<nodes.length;i++){
+      var t=String(nodes[i].textContent||"").trim();
+      if(t && /(LONG|SHORT|WATCH|NO TRADE|BLOCK|WAIT)/i.test(t) && t.length<120) return t;
+    }
+    return "";
+  }
 
-    // Remove old mini-left suffix before recalculating.
-    t=t.replace(/\s*·\s*L\??\d*m\b/ig,"").replace(/\s*·\s*L\?/ig,"");
+  function oracleText(){
+    return txt("oracle32Word") || txt("oracle32Tape") || "";
+  }
 
-    var suffix=miniLeftSuffix();
-    if(suffix && /NOW\s*[–-]\s*\d+M|(?:\d+)\s*[–-]\s*(?:\d+)M/i.test(t)){
-      el.textContent=t+suffix;
+  function updateChangeTrackers(){
+    var p=priceText();
+    if(p && p!==lastPriceText){
+      lastPriceText=p;
+      lastTickAt=now();
+    }
+    var c=commandText();
+    if(c && c!==lastCommand){
+      lastCommand=c;
+      lastCommandAt=now();
+      try{ localStorage.setItem("omen_phase33_4_last_command_seen", JSON.stringify({command:c, at:lastCommandAt, sessionId:sessionId})); }catch(e){}
+    }
+    var o=oracleText();
+    if(o && o!==lastOracleWord){
+      lastOracleWord=o;
+      lastOracleAt=now();
     }
   }
 
-  function loadFlow(){
+  function visibilityStateLabel(){
+    if(document.visibilityState==="hidden") return {label:"BACKGROUND TAB", cls:"oracle33FreshWarn"};
+    if(!document.hasFocus || document.hasFocus()) return {label:"ACTIVE TAB", cls:"oracle33FreshGood"};
+    return {label:"VISIBLE TAB", cls:"oracle33FreshGood"};
+  }
+
+  function freshnessStatus(){
+    var age = lastTickAt ? sec(now()-lastTickAt) : null;
+    var feed=feedText().toUpperCase();
+    var pageAge=sec(now()-STARTED_AT);
+
+    if(feed.indexOf("DEAD")>=0 || feed.indexOf("STALE")>=0 || feed.indexOf("ERROR")>=0 || feed.indexOf("CLOSED")>=0){
+      return {status:"STALE / DO NOT TRUST", cls:"oracle33FreshBad", reason:"feed text indicates stale/dead/error"};
+    }
+
+    if(age===null){
+      if(pageAge<12) return {status:"WARMING UP", cls:"oracle33FreshWarn", reason:"waiting for first live price change"};
+      return {status:"FRESHNESS UNKNOWN", cls:"oracle33FreshWarn", reason:"no observable price-tick change detected"};
+    }
+    if(age<=12) return {status:"FRESH", cls:"oracle33FreshGood", reason:"last price change "+age+"s ago"};
+    if(age<=30) return {status:"AGING", cls:"oracle33FreshWarn", reason:"last price change "+age+"s ago"};
+    return {status:"STALE / DO NOT TRUST", cls:"oracle33FreshBad", reason:"last price change "+age+"s ago"};
+  }
+
+  function commandAgeText(){
+    if(lastCommandAt) return fmtAge(now()-lastCommandAt);
     try{
-      var raw=localStorage.getItem("omen_oracle33_flow_session");
-      if(!raw) return { date:"", events:[], lastKey:"" };
-      return JSON.parse(raw);
-    }catch(e){ return { date:"", events:[], lastKey:"" }; }
+      var raw=localStorage.getItem("omen_phase33_4_last_command_seen");
+      if(raw){
+        var obj=JSON.parse(raw);
+        if(obj && obj.at && obj.command===lastCommand) return fmtAge(now()-obj.at);
+      }
+    }catch(e){}
+    return "unknown";
   }
-  function saveFlow(obj){
-    try{ localStorage.setItem("omen_oracle33_flow_session", JSON.stringify(obj)); }catch(e){}
-  }
 
-  function recordFlowEvent(){
-    var row=ensureFlowRow();
-    var d=nowMYT();
-    var day=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-    var tape=readTape();
-    var grade=parseGrade(tape);
-    var posture=parsePosture(tape);
-    var horizon=parseHorizon(tape).label;
-    var ciText=txt("oracle32Score") || "";
-    var scoreMatch=(tape+" "+ciText).match(/(\d+)\s*(?:\/100\s*CI|%)/i);
-    var ci=scoreMatch ? parseInt(scoreMatch[1],10) : null;
-    var key=[posture,grade,horizon,ci].join("|");
-
-    var store=loadFlow();
-    if(store.date !== day){
-      store={ date:day, events:[], lastKey:"" };
-    }
-
-    // Only count meaningful changes, not every refresh.
-    if(tape && key !== store.lastKey && posture !== "UNKNOWN"){
-      store.events.push({ ts:d.toISOString(), posture:posture, grade:grade, horizon:horizon, ci:ci, key:key });
-      store.lastKey=key;
-      if(store.events.length>120) store.events=store.events.slice(-120);
-      saveFlow(store);
-    }
-
-    var all=store.events.length;
-    var usable=store.events.filter(function(e){ return usableGrades[e.grade]; }).length;
-    var hour=d.getHours()+d.getMinutes()/60;
-    var expectedAll=Math.max(0.5, BASE_ALL*(hour/24));
-    var expectedUsable=Math.max(0.3, BASE_USABLE*(hour/24));
-    var pace="normal", cls="oracle33FlowWarn";
-    if(all >= Math.ceil(expectedAll+1) || usable >= Math.ceil(expectedUsable+1)){ pace="ahead"; cls="oracle33FlowGood"; }
-    else if(all < Math.max(1, Math.floor(expectedAll*0.55)) && hour>4){ pace="slow"; cls="oracle33FlowBad"; }
-    if(all >= 7){ pace="overtrade caution"; cls="oracle33FlowWarn"; }
-
-    var remainingAll=Math.max(0, Math.round(BASE_ALL-all));
-    var remainingUsable=Math.max(0, Math.round(BASE_USABLE-usable));
-
-    setText("oracle33FlowMain",
-      "FLOW: "+all+"/6 signals today · "+usable+" usable · pace "+pace
-    );
-    var sub=q("oracle33FlowSub");
-    if(sub){
-      sub.innerHTML =
-        '<span class="oracle33FlowPill">Baseline 5.95/day</span>' +
-        '<span class="oracle33FlowPill">Usable 3.80/day</span>' +
-        '<span class="oracle33FlowPill">Remaining ~'+remainingAll+' signals / '+remainingUsable+' usable</span>' +
-        '<span class="oracle33FlowPill '+cls+'">Mission flow '+escapeHTML(pace)+'</span>';
-    }
+  function oracleAgeText(){
+    return lastOracleAt ? fmtAge(now()-lastOracleAt) : "unknown";
   }
 
   function tick(){
     try{
-      ensureFlowRow();
-      patchMainTapeTimeLeft();
-      recordFlowEvent();
+      ensureSeal();
+      updateChangeTrackers();
+
+      var vis=visibilityStateLabel();
+      var fresh=freshnessStatus();
+      var main=q("oracle33FreshMain");
+      var sub=q("oracle33FreshSub");
+
+      if(main){
+        main.innerHTML =
+          '<span class="'+vis.cls+'">'+esc(vis.label)+'</span>' +
+          ' · <span class="'+fresh.cls+'">'+esc(fresh.status)+'</span>' +
+          ' · last tick '+esc(lastTickAt ? fmtAge(now()-lastTickAt)+" ago" : "unknown") +
+          ' · command age '+esc(commandAgeText());
+      }
+
+      if(sub){
+        var rule = "Rule: if two browsers disagree, trust the one with fresher tick + fresher command age.";
+        if(fresh.cls==="oracle33FreshBad") rule = "Rule: this tab is stale. Do not trust this command against a fresher browser.";
+        sub.innerHTML =
+          '<span class="oracle33FreshPill">Session '+esc(sessionId)+'</span>' +
+          '<span class="oracle33FreshPill">Oracle age '+esc(oracleAgeText())+'</span>' +
+          '<span class="oracle33FreshPill">Price '+esc(lastPriceText || "not detected")+'</span>' +
+          '<span class="oracle33FreshPill">'+esc(fresh.reason)+'</span>' +
+          '<br>'+esc(rule);
+      }
     }catch(e){}
   }
 
-  if(document.readyState==="loading"){
-    document.addEventListener("DOMContentLoaded", tick);
-  }else{
-    tick();
-  }
-  setInterval(tick, 5000);
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", tick);
+  else tick();
+
+  setInterval(tick, 1000);
+
+  try{
+    var bodyObserver=new MutationObserver(function(){ updateChangeTrackers(); });
+    bodyObserver.observe(document.body,{childList:true,subtree:true,characterData:true});
+  }catch(e){}
+
+  window.addEventListener("focus", tick);
+  window.addEventListener("blur", tick);
+  document.addEventListener("visibilitychange", tick);
 })();
 </script>
-<!-- OMEN_PHASE33_2_ORACLE_FLOW_TIMELEFT_PATCH_END -->
+<!-- OMEN_PHASE33_4_BROWSER_FRESHNESS_COMMAND_SEAL_END -->
 
 </body>
 </html>
